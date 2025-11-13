@@ -496,9 +496,10 @@ function Start-Combat {
 	if ($monster.IsBoss) {
     $global:BossesDefeated++
     Write-Typewriter "*** BOSS DEFEATED! ***" -ForegroundColor Magenta
-	}
-    # Reset any temporary stat changes after combat
-    if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
+	}    
+        Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
+		# Reset any temporary stat changes after combat
+    	if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
         # Reset to base + level progression (simplified calculation)
         $global:Player.Attack = $ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2)
         if ($global:Player.Ascension) {
@@ -512,8 +513,6 @@ function Start-Combat {
         if ($global:Player.Ascension) {
             $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
         }
-    }    
-        Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
         return $true
     }
 }
@@ -722,5 +721,6 @@ function Start-Game {
 
 # Start the game
 Start-Game
+
 
 
