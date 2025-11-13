@@ -518,7 +518,6 @@ function Start-Combat {
             $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
         }
 	}
-}
 
 function Level-Up {
     while ($global:Player.Experience -ge $global:Player.ExperienceToNextLevel) {
@@ -723,6 +722,7 @@ function Start-Game {
 
 # Start the game
 Start-Game
+
 
 
 
