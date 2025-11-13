@@ -5,7 +5,59 @@ $global:Player = $null
 $global:GameRunning = $true
 $global:CurrentFloor = 1
 $global:MonstersDefeated = 0
-$global:BossesDefeated = 1
+$global:BossesDefeated = 0
+
+# Add more boss special abilities.
+$BossAbilities = @(
+    @{ 
+        Name = "Dark Blast"; 
+        Description = "unleashes a wave of dark energy";
+        DamageMultiplier = 1.8;
+        Effect = "lifedrain"  # Heals boss for portion of damage
+    },
+    @{ 
+        Name = "Soul Drain"; 
+        Description = "drains your life force";
+        DamageMultiplier = 1.5;
+        Effect = "lifedrain"  # Heals boss for portion of damage
+    },
+    @{ 
+        Name = "Shadow Strike"; 
+        Description = "strikes from the shadows";
+        DamageMultiplier = 2.0;
+        Effect = "critical"   # Higher chance to crit
+    },
+    @{ 
+        Name = "Necrotic Touch"; 
+        Description = "saps your strength with necrotic energy";
+        DamageMultiplier = 1.3;
+        Effect = "debuff"     # Reduces player stats
+    },
+    @{ 
+        Name = "Abyssal Scream"; 
+        Description = "lets out a terrifying scream from the abyss";
+        DamageMultiplier = 1.6;
+        Effect = "stun"       # May skip player's next turn
+    },
+    @{ 
+        Name = "Blood Ritual"; 
+        Description = "performs a dark blood ritual";
+        DamageMultiplier = 1.4;
+        Effect = "sacrifice"  # Damages both but heals boss more
+    },
+    @{ 
+        Name = "Void Slash"; 
+        Description = "attacks with a blade of pure void";
+        DamageMultiplier = 1.7;
+        Effect = "armorbreak" # Reduces player defense
+    },
+    @{ 
+        Name = "Cursed Blight"; 
+        Description = "curses you with ancient blight";
+        DamageMultiplier = 1.2;
+        Effect = "dot"        # Damage over time
+    }
+)
 
 # Typewriter effect function - Testing. 
 function Write-Typewriter {
@@ -225,9 +277,14 @@ function Get-RandomMonster {
 		$boss.Gold = [Math]::Round($boss.Gold * $scaleFactor)
 		$boss.CriticalChance = 15  # Bosses have 15% critical chance
 		$boss.CriticalMultiplier = 2.0  # Bosses do 2x critical damage 
-        # Add special boss abilities - TODO: Need more variant and random modifider.
+       
+		# Add special boss abilities with random modifieders.
         $boss.IsBoss = $true
-        $boss.SpecialAbility = "Power Attack"  # Need more variant
+		$randomAbility = $BossAbilities | Get-Random
+		$boss.SpecialAbility = $randomAbility.Name
+		$boss.SpecialDescription = $randomAbility.Description
+		$boss.SpecialMultiplier = $randomAbility.DamageMultiplier
+		$boss.SpecialEffect = $randomAbility.Effect
         
         Write-Typewriter "`n*** BOSS ENCOUNTER! ***" -ForegroundColor Red
         return $boss
@@ -331,20 +388,79 @@ function Start-Combat {
 	       } else {
 	    Write-Typewriter "`n=== MONSTER'S TURN ===" -ForegroundColor Red
 	    
-	    # Boss special attacks
-	    if ($monster.IsBoss -and (Get-Random -Maximum 100) -lt 25) {
-		$baseDamage = [Math]::Max(2, ($monster.Attack * 1.5) - $global:Player.Defense)
-		
-		# Critical hit check for boss special - maybe need to nerf
-		$isCritical = (Get-Random -Maximum 100) -lt $monster.CriticalChance
-		if ($isCritical) {
-		    $specialDamage = [Math]::Round($baseDamage * $monster.CriticalMultiplier)
-		    Write-Typewriter "CRITICAL HIT! The $($monster.Name) uses $($monster.SpecialAbility) for $specialDamage damage!" -ForegroundColor DarkRed
-		} else {
-		    $specialDamage = $baseDamage
-		    Write-Typewriter "The $($monster.Name) uses $($monster.SpecialAbility) for $specialDamage damage!" -ForegroundColor Red
-		}
-		$global:Player.Health -= $specialDamage
+		# Boss special attacks
+		if ($monster.IsBoss -and (Get-Random -Maximum 100) -lt 25) {
+    		$baseDamage = [Math]::Max(2, ($monster.Attack * $monster.SpecialMultiplier) - $global:Player.Defense)
+    
+    	# Apply special effects based on ability type
+    	$effectMessage = ""
+    	switch ($monster.SpecialEffect) {
+        	"lifedrain" {
+            	$healAmount = [Math]::Round($baseDamage * 0.5)
+            	$monsterHealth += $healAmount
+            	$monsterHealth = [Math]::Min($monster.Health, $monsterHealth)  # Don't exceed max health
+            	$effectMessage = " and drains $healAmount health from you!"
+        	}
+        	"critical" {
+            	# Double critical chance for these abilities
+            	$isCritical = (Get-Random -Maximum 100) -lt ($monster.CriticalChance * 2)
+            		if ($isCritical) {
+                	$baseDamage = [Math]::Round($baseDamage * $monster.CriticalMultiplier)
+                	$effectMessage = " with enhanced critical strike!"
+            	}
+        	}
+        	"debuff" {
+            	# Reduce player attack temporarily
+            	$attackReduction = 2
+            	$global:Player.Attack = [Math]::Max(1, $global:Player.Attack - $attackReduction)
+            	$effectMessage = " reducing your attack power by $attackReduction!"
+        	}
+        	"stun" {
+            	# Chance to stun player (skip next turn)
+            	if ((Get-Random -Maximum 100) -lt 40) {
+                $playerTurn = $false  # Player loses next turn
+                $effectMessage = " stunning you and making you lose your next turn!"
+            } else {
+                $effectMessage = " but you resist the stun!"
+            }
+        	}
+        	"sacrifice" {
+            # Boss takes some damage but gains more
+            $bossSelfDamage = [Math]::Round($baseDamage * 0.3)
+            $monsterHealth -= $bossSelfDamage
+            $healAmount = [Math]::Round($baseDamage * 0.8)
+            $monsterHealth += $healAmount
+            $monsterHealth = [Math]::Min($monster.Health, $monsterHealth)
+            $effectMessage = " sacrificing $bossSelfDamage health but gaining $healAmount!"
+        	}
+        	"armorbreak" {
+            # Reduce player defense
+            $defenseReduction = 2
+            $global:Player.Defense = [Math]::Max(0, $global:Player.Defense - $defenseReduction)
+            $effectMessage = " breaking your armor and reducing defense by $defenseReduction!"
+        	}
+        	"dot" {
+            # Apply damage over time
+            $dotDamage = [Math]::Round($baseDamage * 0.3)
+            $global:Player.Health -= $dotDamage
+            $effectMessage = " applying a damage over time effect for $dotDamage additional damage!"
+        }
+        default {
+            $effectMessage = "!"
+        }
+    }
+    
+    	# Critical hit check for boss special
+    	$isCritical = (Get-Random -Maximum 100) -lt $monster.CriticalChance
+    		if ($isCritical -and $monster.SpecialEffect -ne "critical") {  # Don't double-dip on critical effects
+        $specialDamage = [Math]::Round($baseDamage * $monster.CriticalMultiplier)
+        Write-Typewriter "CRITICAL HIT! The $($monster.Name) $($monster.SpecialDescription) for $specialDamage damage$effectMessage" -Color DarkRed -Delay 20
+    	} else {
+        $specialDamage = $baseDamage
+        Write-Typewriter "The $($monster.Name) $($monster.SpecialDescription) for $specialDamage damage$effectMessage" -Color Red -Delay 20
+    	}
+    	$global:Player.Health -= $specialDamage
+	}
 	    } else {
 		$baseDamage = [Math]::Max(1, $monster.Attack - $global:Player.Defense + (Get-Random -Minimum -1 -Maximum 2))
 		
@@ -381,7 +497,22 @@ function Start-Combat {
     $global:BossesDefeated++
     Write-Typewriter "*** BOSS DEFEATED! ***" -ForegroundColor Magenta
 	}
-        
+    # Reset any temporary stat changes after combat
+    if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
+        # Reset to base + level progression (simplified calculation)
+        $global:Player.Attack = $ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2)
+        if ($global:Player.Ascension) {
+            $global:Player.Attack += $AscensionBonuses[$global:Player.Ascension].Attack
+        }
+    }
+    
+    if ($global:Player.Defense -lt ($ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1))) {
+        # Reset to base + level progression
+        $global:Player.Defense = $ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1)
+        if ($global:Player.Ascension) {
+            $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
+        }
+    }    
         Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
         return $true
     }
@@ -591,4 +722,5 @@ function Start-Game {
 
 # Start the game
 Start-Game
+
 
