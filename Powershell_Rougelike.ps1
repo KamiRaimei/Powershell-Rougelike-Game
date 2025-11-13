@@ -7,57 +7,7 @@ $global:CurrentFloor = 1
 $global:MonstersDefeated = 0
 $global:BossesDefeated = 0
 
-# Add more boss special abilities.
-$BossAbilities = @(
-    @{ 
-        Name = "Dark Blast"; 
-        Description = "unleashes a wave of dark energy";
-        DamageMultiplier = 1.8;
-        Effect = "lifedrain"  # Heals boss for portion of damage
-    },
-    @{ 
-        Name = "Soul Drain"; 
-        Description = "drains your life force";
-        DamageMultiplier = 1.5;
-        Effect = "lifedrain"  # Heals boss for portion of damage
-    },
-    @{ 
-        Name = "Shadow Strike"; 
-        Description = "strikes from the shadows";
-        DamageMultiplier = 2.0;
-        Effect = "critical"   # Higher chance to crit
-    },
-    @{ 
-        Name = "Necrotic Touch"; 
-        Description = "saps your strength with necrotic energy";
-        DamageMultiplier = 1.3;
-        Effect = "debuff"     # Reduces player stats
-    },
-    @{ 
-        Name = "Abyssal Scream"; 
-        Description = "lets out a terrifying scream from the abyss";
-        DamageMultiplier = 1.6;
-        Effect = "stun"       # May skip player's next turn
-    },
-    @{ 
-        Name = "Blood Ritual"; 
-        Description = "performs a dark blood ritual";
-        DamageMultiplier = 1.4;
-        Effect = "sacrifice"  # Damages both but heals boss more
-    },
-    @{ 
-        Name = "Void Slash"; 
-        Description = "attacks with a blade of pure void";
-        DamageMultiplier = 1.7;
-        Effect = "armorbreak" # Reduces player defense
-    },
-    @{ 
-        Name = "Cursed Blight"; 
-        Description = "curses you with ancient blight";
-        DamageMultiplier = 1.2;
-        Effect = "dot"        # Damage over time
-    }
-)
+
 
 # Typewriter effect function - Testing. 
 function Write-Typewriter {
@@ -180,6 +130,58 @@ $BossTypes = @(
     @{ Name = "Archlich"; BaseHealth = 40; BaseAttack = 18; BaseDefense = 6; XP = 220; Gold = 90 },
     @{ Name = "Chaos God"; BaseHealth = 55; BaseAttack = 16; BaseDefense = 10; XP = 250; Gold = 150 },
     @{ Name = "World Eater"; BaseHealth = 70; BaseAttack = 14; BaseDefense = 14; XP = 300; Gold = 200 }
+)
+
+# Add more boss special abilities.
+$BossAbilities = @(
+    @{ 
+        Name = "Dark Blast"; 
+        Description = "unleashes a wave of dark energy";
+        DamageMultiplier = 1.8;
+        Effect = "lifedrain"  # Heals boss for portion of damage
+    },
+    @{ 
+        Name = "Soul Drain"; 
+        Description = "drains your life force";
+        DamageMultiplier = 1.5;
+        Effect = "lifedrain"  # Heals boss for portion of damage
+    },
+    @{ 
+        Name = "Shadow Strike"; 
+        Description = "strikes from the shadows";
+        DamageMultiplier = 2.0;
+        Effect = "critical"   # Higher chance to crit
+    },
+    @{ 
+        Name = "Necrotic Touch"; 
+        Description = "saps your strength with necrotic energy";
+        DamageMultiplier = 1.3;
+        Effect = "debuff"     # Reduces player stats
+    },
+    @{ 
+        Name = "Abyssal Scream"; 
+        Description = "lets out a terrifying scream from the abyss";
+        DamageMultiplier = 1.6;
+        Effect = "stun"       # May skip player's next turn
+    },
+    @{ 
+        Name = "Blood Ritual"; 
+        Description = "performs a dark blood ritual";
+        DamageMultiplier = 1.4;
+        Effect = "sacrifice"  # Damages both but heals boss more
+    },
+    @{ 
+        Name = "Void Slash"; 
+        Description = "attacks with a blade of pure void";
+        DamageMultiplier = 1.7;
+        Effect = "armorbreak" # Reduces player defense
+    },
+    @{ 
+        Name = "Cursed Blight"; 
+        Description = "curses you with ancient blight";
+        DamageMultiplier = 1.2;
+        Effect = "dot"        # Damage over time
+    }
 )
 
 function Show-Title {
@@ -498,6 +500,8 @@ function Start-Combat {
     Write-Typewriter "*** BOSS DEFEATED! ***" -ForegroundColor Magenta
 	}    
         Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
+        return $true
+    }
 		# Reset any temporary stat changes after combat
     	if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
         # Reset to base + level progression (simplified calculation)
@@ -513,8 +517,7 @@ function Start-Combat {
         if ($global:Player.Ascension) {
             $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
         }
-        return $true
-    }
+	}
 }
 
 function Level-Up {
@@ -658,7 +661,6 @@ function Visit-Shop {
     }
 }
 
-
 function Start-Game {
     New-Player
     
@@ -721,6 +723,7 @@ function Start-Game {
 
 # Start the game
 Start-Game
+
 
 
 
