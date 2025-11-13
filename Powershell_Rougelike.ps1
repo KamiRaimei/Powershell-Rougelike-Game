@@ -51,7 +51,7 @@ $ClassDefinitions = @{
     }
     Mage = @{
         Health = 18
-        Mana = 25
+        Mana = 35
         Attack = 5
         Defense = 3
         Speed = 6
@@ -69,7 +69,7 @@ $ClassDefinitions = @{
     }
     Cleric = @{
         Health = 25
-        Mana = 20
+        Mana = 30
         Attack = 5
         Defense = 5
         Speed = 4
@@ -103,6 +103,101 @@ $AscensionBonuses = @{
     Inquisitor = @{ Health = 18; Mana = 12; Attack = 6; Defense = 4; Speed = 4 }
     Oracle = @{ Health = 15; Mana = 20; Attack = 3; Defense = 3; Speed = 5 }
     Saint = @{ Health = 25; Mana = 18; Attack = 2; Defense = 7; Speed = 1 }
+}
+
+# Spell Definitions
+$ClassSpells = @{
+    "Mage" = @(
+        @{ 
+            Name = "Fireball"; 
+            Description = "Hurl a ball of fire at your enemy";
+            Damage = { param($player) 15 + ($player.Level * 2) + ($player.Attack * 0.5) };
+            ManaCost = 12;
+            Element = "Fire";
+            Type = "Damage"
+        },
+        @{ 
+            Name = "Ice Shard"; 
+            Description = "Launch sharp shards of ice";
+            Damage = { param($player) 12 + ($player.Level * 1.5) + ($player.Attack * 0.3) };
+            ManaCost = 10;
+            Element = "Ice";
+            Type = "Damage";
+            Effect = "Slow"  # Could reduce enemy speed
+        },
+        @{ 
+            Name = "Lightning Bolt"; 
+            Description = "Strike with a bolt of lightning";
+            Damage = { param($player) 18 + ($player.Level * 2.5) + ($player.Attack * 0.4) };
+            ManaCost = 15;
+            Element = "Lightning";
+            Type = "Damage";
+            Effect = "Stun"  # Chance to stun
+        },
+        @{ 
+            Name = "Minor Heal"; 
+            Description = "Basic healing magic";
+            Heal = { param($player) 10 + ($player.Level * 1) };
+            ManaCost = 8;
+            Type = "Heal"
+        }
+    )
+    "Cleric" = @(
+        @{ 
+            Name = "Holy Light"; 
+            Description = "Channel divine light to smite enemies";
+            Damage = { param($player) 8 + ($player.Level * 1) + ($player.Attack * 0.2) };
+            ManaCost = 6;
+            Element = "Holy";
+            Type = "Damage"
+        },
+        @{ 
+            Name = "Divine Strike"; 
+            Description = "Empowered strike with holy energy";
+            Damage = { param($player) 10 + ($player.Level * 1.2) + ($player.Attack * 0.25) };
+            ManaCost = 8;
+            Element = "Holy";
+            Type = "Damage"
+        },
+        @{ 
+            Name = "Purifying Flame"; 
+            Description = "Cleansing flames that burn impurities";
+            Damage = { param($player) 6 + ($player.Level * 0.8) + ($player.Attack * 0.15) };
+            ManaCost = 5;
+            Element = "Fire";
+            Type = "Damage"
+        },
+        @{ 
+            Name = "Greater Heal"; 
+            Description = "Powerful divine healing";
+            Heal = { param($player) 25 + ($player.Level * 3) + ($player.MaxHealth * 0.1) };
+            ManaCost = 12;
+            Type = "Heal"
+        }
+    )
+}
+
+# Elemental weaknesses/resistances
+$ElementalEffects = @{
+    "Fire" = @{ 
+        Description = "burns intensely"; 
+        BonusDamage = 1.2  # 20% bonus damage
+    }
+    "Ice" = @{ 
+        Description = "freezes the target"; 
+        BonusDamage = 1.1;
+        Effect = "Reduces enemy speed by 2 for next turn"
+    }
+    "Lightning" = @{ 
+        Description = "electrocutes the target"; 
+        BonusDamage = 1.3;
+        Effect = "10% chance to stun enemy"
+    }
+    "Holy" = @{ 
+        Description = "purifies with divine energy"; 
+        BonusDamage = 1.15;
+        Effect = "Extra effective against undead"
+    }
 }
 
 # Monster Definitions - TODO: Need more monster variant
@@ -296,6 +391,35 @@ function Show-PlayerStats {
     Write-Host "Gold: $($global:Player.Gold)" -ForegroundColor Yellow
 }
 
+function Show-Spells {
+    if ($global:Player.Class -ne "Mage" -and $global:Player.Class -ne "Cleric") {
+        Write-Host "Your class doesn't use spells." -ForegroundColor Gray
+        return
+    }
+    
+    Write-Host "`n=== YOUR SPELLS ===" -ForegroundColor Cyan
+    $spells = $ClassSpells[$global:Player.Class]
+    
+    foreach ($spell in $spells) {
+        if ($spell.Type -eq "Damage") {
+            $estimatedDamage = [Math]::Round($spell.Damage.Invoke($global:Player))
+            Write-Host "$($spell.Name): $($spell.Description)" -ForegroundColor White
+            Write-Host "  Damage: ~$estimatedDamage | Mana Cost: $($spell.ManaCost)" -ForegroundColor Gray
+            if ($spell.Element) {
+                Write-Host "  Element: $($spell.Element)" -ForegroundColor Yellow
+            }
+        } else {
+            $estimatedHeal = [Math]::Round($spell.Heal.Invoke($global:Player))
+            Write-Host "$($spell.Name): $($spell.Description)" -ForegroundColor White
+            Write-Host "  Heal: ~$estimatedHeal | Mana Cost: $($spell.ManaCost)" -ForegroundColor Gray
+        }
+        if ($spell.Effect) {
+            Write-Host "  Effect: $($spell.Effect)" -ForegroundColor Cyan
+        }
+        Write-Host ""
+    }
+}
+
 function Get-RandomMonster {
     # Check for boss every 3 floors
     $isBossFloor = $global:CurrentFloor % 3 -eq 0
@@ -412,82 +536,170 @@ function Start-Combat {
     $playerTurn = $global:Player.Speed -ge (Get-Random -Minimum 1 -Maximum 10)
 
     while ($monsterHealth -gt 0 -and $global:Player.Health -gt 0) {
-        if ($playerTurn) {
-            Write-Host "`n=== YOUR TURN ===" -ForegroundColor Green
-            Write-Host "1. Attack"
-            Write-Host "2. Special Ability"
-            Write-Host "3. Use Potion (5 gold)"
-            Write-Host "4. Flee"
-            
-            $choice = Read-Host "Choose action"
-            
-	switch ($choice) {
-	    '1' {
-		$baseDamage = [Math]::Max(1, $global:Player.Attack - $monster.Defense + (Get-Random -Minimum -2 -Maximum 3))
-		
-		# Critical hit check - need balancing to prevent cheesing
-		$isCritical = (Get-Random -Maximum 100) -lt $global:Player.CriticalChance
-		if ($isCritical) {
-		    $damage = [Math]::Round($baseDamage * $global:Player.CriticalMultiplier)
-		    Write-Typewriter "CRITICAL HIT! You attack the $($monster.Name) for $damage damage!" -Color Cyan -Delay 20
-		    # Write-Host "CRITICAL HIT! You attack the $($monster.Name) for $damage damage!" -ForegroundColor Cyan
-		} else {
-		    $damage = $baseDamage
-		    Write-Host "You attack the $($monster.Name) for $damage damage!" -ForegroundColor Yellow
-		}
-		$monsterHealth -= $damage
-	    }
-	    '2' {
-		if ($global:Player.Mana -ge 5) {
-		    $global:Player.Mana -= 5
-		    $baseDamage = $global:Player.Attack + (Get-Random -Minimum 2 -Maximum 6)
-		    
-		    # Critical hit check for special ability (higher chance)
-		    $isCritical = (Get-Random -Maximum 100) -lt ($global:Player.CriticalChance + 10)
-		    if ($isCritical) {
-			$specialDamage = [Math]::Round($baseDamage * $global:Player.CriticalMultiplier)
-			Write-Host "CRITICAL HIT! You use a special ability for $specialDamage damage!" -ForegroundColor Cyan
+	if ($playerTurn) {
+	    Write-Host "`n=== YOUR TURN ===" -ForegroundColor Green
+	    Write-Host "1. Attack"
+	    
+	    # Show spells for Mage and Cleric
+	    if ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric") {
+		$spells = $ClassSpells[$global:Player.Class]
+		for ($i = 0; $i -lt $spells.Count; $i++) {
+		    $spell = $spells[$i]
+		    $spellNumber = $i + 2
+		    if ($spell.Type -eq "Damage") {
+			$estimatedDamage = [Math]::Round($spell.Damage.Invoke($global:Player))
+			Write-Host "$spellNumber. $($spell.Name) - $($spell.Description) (Mana: $($spell.ManaCost), Damage: ~$estimatedDamage)"
 		    } else {
-			$specialDamage = $baseDamage
-			Write-Host "You use a special ability for $specialDamage damage!" -ForegroundColor Magenta
+			$estimatedHeal = [Math]::Round($spell.Heal.Invoke($global:Player))
+			Write-Host "$spellNumber. $($spell.Name) - $($spell.Description) (Mana: $($spell.ManaCost), Heal: ~$estimatedHeal)"
 		    }
-		    $monsterHealth -= $specialDamage
-		} else {
-		    Write-Host "Not enough mana!" -ForegroundColor Red
-		    continue
 		}
+		$potionOption = $spells.Count + 2
+		Write-Host "$potionOption. Use Potion (5 gold)"
+		Write-Host "$($potionOption + 1). Flee"
+	    } else {
+		Write-Host "2. Special Ability"
+		Write-Host "3. Use Potion (5 gold)"
+		Write-Host "4. Flee"
 	    }
-		'3' {
-		    $healCost = 5 + [Math]::Floor($global:Player.Level / 3)  # Cost increases every 3 levels
-		    if ($global:Player.Gold -ge $healCost) {
-			$global:Player.Gold -= $healCost
+	    
+	    $choice = Read-Host "Choose action"
+            
+		switch ($choice) {
+		    '1' {
+			$baseDamage = [Math]::Max(1, $global:Player.Attack - $monster.Defense + (Get-Random -Minimum -2 -Maximum 3))
 			
-			# Healing calculation as above
-			$baseHeal = 20
-			$levelBonus = $global:Player.Level * 3
-			$healthPercentage = $global:Player.MaxHealth * 0.15
-			$heal = $baseHeal + $levelBonus + [Math]::Round($healthPercentage)
+			# Critical hit check
+			$isCritical = (Get-Random -Maximum 100) -lt $global:Player.CriticalChance
+			if ($isCritical) {
+			    $damage = [Math]::Round($baseDamage * $global:Player.CriticalMultiplier)
+			    Write-Typewriter "CRITICAL HIT! You attack the $($monster.Name) for $damage damage!" -Color Cyan -Delay 20
+			} else {
+			    $damage = $baseDamage
+			    Write-Quick "You attack the $($monster.Name) for $damage damage!" -Color Yellow
+			}
+			$monsterHealth -= $damage
+		    }
+		    {($_ -ge '2' -and $_ -le '5') -and ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric")} {
+			$spellIndex = [int]$choice - 2
+			$spells = $ClassSpells[$global:Player.Class]
 			
-			$global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $heal)
-			Write-Host "You use a potion (cost: $healCost gold) and heal $heal health!" -ForegroundColor Green
-		    } else {
-			Write-Host "Not enough gold! Need $healCost gold." -ForegroundColor Red
+			if ($spellIndex -lt $spells.Count) {
+			    $selectedSpell = $spells[$spellIndex]
+			    
+			    if ($global:Player.Mana -ge $selectedSpell.ManaCost) {
+				$global:Player.Mana -= $selectedSpell.ManaCost
+				
+				if ($selectedSpell.Type -eq "Damage") {
+				    # Calculate spell damage
+				    $baseSpellDamage = [Math]::Round($selectedSpell.Damage.Invoke($global:Player))
+				    
+				    # Apply elemental bonus if applicable
+				    $elementalBonus = 1.0
+				    $elementDescription = ""
+				    if ($selectedSpell.Element -and $ElementalEffects.ContainsKey($selectedSpell.Element)) {
+					$elementalBonus = $ElementalEffects[$selectedSpell.Element].BonusDamage
+					$elementDescription = $ElementalEffects[$selectedSpell.Element].Description
+				    }
+				    
+				    $spellDamage = [Math]::Round($baseSpellDamage * $elementalBonus)
+				    
+				    # Critical hit check for spells (higher chance)
+				    $isCritical = (Get-Random -Maximum 100) -lt ($global:Player.CriticalChance + 5)
+				    if ($isCritical) {
+					$spellDamage = [Math]::Round($spellDamage * $global:Player.CriticalMultiplier)
+					if ($elementDescription) {
+					    Write-Typewriter "CRITICAL HIT! You cast $($selectedSpell.Name) and it $elementDescription for $spellDamage damage!" -Color Cyan -Delay 20
+					} else {
+					    Write-Typewriter "CRITICAL HIT! You cast $($selectedSpell.Name) for $spellDamage damage!" -Color Cyan -Delay 20
+					}
+				    } else {
+					if ($elementDescription) {
+					    Write-Typewriter "You cast $($selectedSpell.Name) and it $elementDescription for $spellDamage damage!" -Color Magenta -Delay 20
+					} else {
+					    Write-Typewriter "You cast $($selectedSpell.Name) for $spellDamage damage!" -Color Magenta -Delay 20
+					}
+				    }
+				    
+				    # Apply spell effects
+				    if ($selectedSpell.Effect -eq "Slow") {
+					# Reduce monster speed (affects turn order)
+					Write-Host "The $($monster.Name) is slowed!" -ForegroundColor Blue
+				    } elseif ($selectedSpell.Effect -eq "Stun" -and (Get-Random -Maximum 100) -lt 10) {
+					$playerTurn = $true  # Player gets another turn
+					Write-Host "The $($monster.Name) is stunned and loses its turn!" -ForegroundColor Yellow
+				    }
+				    
+				    $monsterHealth -= $spellDamage
+				    
+				} elseif ($selectedSpell.Type -eq "Heal") {
+				    $healAmount = [Math]::Round($selectedSpell.Heal.Invoke($global:Player))
+				    $oldHealth = $global:Player.Health
+				    $global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $healAmount)
+				    $actualHeal = $global:Player.Health - $oldHealth
+				    
+				    Write-Typewriter "You cast $($selectedSpell.Name) and heal $actualHeal health!" -Color Green -Delay 20
+				    Write-Host "Current HP: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Green
+				}
+			    } else {
+				Write-Host "Not enough mana! You need $($selectedSpell.ManaCost) mana." -ForegroundColor Red
+				continue
+			    }
+			} else {
+			    Write-Host "Invalid spell selection!" -ForegroundColor Red
+			    continue
+			}
+		    }
+		    {($_ -eq '2' -and $global:Player.Class -ne "Mage" -and $global:Player.Class -ne "Cleric") -or 
+		     ($_ -eq '6' -and ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric"))} {
+			# Special Ability for non-spellcasters or Potion for spellcasters
+			$actualChoice = if ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric") { '3' } else { $choice }
+			
+			switch ($actualChoice) {
+			    '2' {
+				if ($global:Player.Mana -ge 5) {
+				    $global:Player.Mana -= 5
+				    $specialDamage = $global:Player.Attack + (Get-Random -Minimum 2 -Maximum 6)
+				    $monsterHealth -= $specialDamage
+				    Write-Host "You use a special ability for $specialDamage damage!" -ForegroundColor Magenta
+				} else {
+				    Write-Host "Not enough mana!" -ForegroundColor Red
+				    continue
+				}
+			    }
+			    '3' {
+				if ($global:Player.Gold -ge 5) {
+				    $global:Player.Gold -= 5
+				    
+				    # Scaled healing based on player level and max health
+				    $baseHeal = 20
+				    $levelBonus = $global:Player.Level * 3
+				    $healthPercentage = $global:Player.MaxHealth * 0.15
+				    $heal = $baseHeal + $levelBonus + [Math]::Round($healthPercentage)
+				    
+				    $global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $heal)
+				    Write-Host "You use a potion and heal $heal health!" -ForegroundColor Green
+				} else {
+				    Write-Host "Not enough gold!" -ForegroundColor Red
+				    continue
+				}
+			    }
+			}
+		    }
+		    {($_ -eq '4' -and $global:Player.Class -ne "Mage" -and $global:Player.Class -ne "Cleric") -or 
+		     ($_ -eq '7' -and ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric"))} {
+			if ((Get-Random -Maximum 100) -lt 40) {
+			    Write-Host "You successfully fled from combat!" -ForegroundColor Green
+			    return $false
+			} else {
+			    Write-Host "Failed to flee!" -ForegroundColor Red
+			}
+		    }
+		    default {
+			Write-Host "Invalid choice!" -ForegroundColor Red
 			continue
 		    }
 		}
-                '4' {
-                    if ((Get-Random -Maximum 100) -lt 40) {
-                        Write-Typewriter "You successfully fled from combat!" -ForegroundColor Green
-                        return $false
-                    } else {
-                        Write-Typewriter "Failed to flee!" -ForegroundColor Red
-                    }
-                }
-                default {
-                    Write-Host "Invalid choice!" -ForegroundColor Red
-                    continue
-                }
-            }
 	       } else {
 	    Write-Typewriter "`n=== MONSTER'S TURN ===" -ForegroundColor Red
 	    
@@ -737,7 +949,7 @@ function Level-Up {
         $healthIncrease = 5 + (Get-Random -Minimum 1 -Maximum 4)
         $attackIncrease = 1 + (Get-Random -Minimum 0 -Maximum 2)
         $defenseIncrease = 1 + (Get-Random -Minimum 0 -Maximum 2)
-        $manaIncrease = 3 + (Get-Random -Minimum 1 -Maximum 3)
+        $manaIncrease = 5 + (Get-Random -Minimum 2 -Maximum 5)
         
         $global:Player.MaxHealth += $healthIncrease
         $global:Player.Health = $global:Player.MaxHealth
@@ -801,10 +1013,11 @@ function Show-GameMenu {
     Write-Host "1. Explore (Fight monsters)"
     Write-Host "2. Rest (Heal for 10 gold)"
     Write-Host "3. View Stats"
-    Write-Host "4. Visit Shop"
-    Write-Host "5. Show Artifacts"
-    Write-Host "6. Descend to next floor"
-    Write-Host "7. Quit Game"
+    Write-Host "4. View Spells"
+    Write-Host "5. Visit Shop"
+    Write-Host "6. Show Artifacts"
+    Write-Host "7. Descend to next floor"
+    Write-Host "0. Quit Game"
 }
 
 # Shop Inventory and logic - TODO Make the Item balance to prevent over leveled bruteforce
@@ -957,18 +1170,21 @@ function Start-Game {
             '3' {
                 Show-PlayerStats
             }
-            '4' {
+	    '4' {
+		Show-Spells
+		}
+            '5' {
                 Visit-Shop
             }
-	    '5' {
+	    '6' {
 	    	Show-Artifacts
 	    }
-            '6' {
+            '7' {
                 $global:CurrentFloor++
                 Write-Host "You descend to floor $global:CurrentFloor..." -ForegroundColor Cyan
                 Write-Host "Monsters grow stronger!" -ForegroundColor Yellow
             }
-            '7' {
+            '0' {
                 $global:GameRunning = $false
                 Write-Host "You've perished into a dark realm, never to return." -ForegroundColor Green
             }
