@@ -448,13 +448,13 @@ function Show-Spells {
 function Get-RandomMonster {
     # Check for boss every 3 floors
     $isBossFloor = $global:CurrentFloor % 3 -eq 0
-    $isBoss = $isBossFloor -and (Get-Random -Maximum 100) -lt 5  # Tuned this value to make it fair.
+    $isBoss = $isBossFloor -and (Get-Random -Maximum 100) -lt 5  # Encounter percentage - Tuned this value to make it fair.
     
     if ($isBoss) {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
         # Scale boss stats based on player level and stats (balance as needed)
-		$scaleFactor = 1 + ($global:Player.Level * 0.10) + ($global:CurrentFloor * 0.08)
+		$scaleFactor = 1 + ($global:Player.Level * 0.10) + ($global:Player.Attack * 0.20) + ($global:CurrentFloor * 0.1)
 		$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
 		$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
 		$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
@@ -479,7 +479,7 @@ function Get-RandomMonster {
         $baseMonster = $MonsterTypes[$monsterIndex].Clone()
         
 # Scale monster stats calculation based on floor level
-	$scaleFactor = 1 + ($global:CurrentFloor * 0.18)
+	$scaleFactor = 1 + ($global:CurrentFloor * 0.3)
 	$baseMonster.Health = [Math]::Round($baseMonster.Health * $scaleFactor)
 	$baseMonster.Attack = [Math]::Round($baseMonster.Attack * $scaleFactor)
 	$baseMonster.Defense = [Math]::Round($baseMonster.Defense * $scaleFactor)
