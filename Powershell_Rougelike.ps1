@@ -818,6 +818,7 @@ function Visit-Shop {
         @{ Name = "Mana Potion"; Cost = 12; Description = "Restore 20 Mana" },
         @{ Name = "Attack Boost"; Cost = 50; Description = "Permanently +2 Attack" },
         @{ Name = "Defense Boost"; Cost = 50; Description = "Permanently +2 Defense" },
+	@{ Name = "Mana Boost"; Cost = 50; Description = "Permanently +5 Mana" },
         @{ Name = "Critical Charm"; Cost = 95; Description = "Permanently +5% Critical Chance" },
         @{ Name = "Keen Edge"; Cost = 180; Description = "Permanently +0.5 Critical Multiplier" }
     )
@@ -826,11 +827,13 @@ function Visit-Shop {
         Write-Host "$($i + 1). $($shopItems[$i].Name) - $($shopItems[$i].Cost) gold" -ForegroundColor White
         Write-Host "   $($shopItems[$i].Description)" -ForegroundColor Gray
     }
+    Write-Host "8. Sell Artifact (50 gold)" -ForegroundColor White
+    Write-Host "   Get rid of an unwanted artifact" -ForegroundColor Gray
     Write-Host "0. Leave Shop" -ForegroundColor Gray
     
     do {
         $choice = Read-Host "`nSelect item to purchase"
-    } while ($choice -notin @('0','1','2','3','4','5','6','7'))
+    } while ($choice -notin @('0','1','2','3','4','5','6','7','8'))
     
     if ($choice -eq '0') { return }
     
@@ -857,14 +860,18 @@ function Visit-Shop {
                 Write-Host "Defense permanently increased by 2!" -ForegroundColor Green
             }
             '5' {
+                $global:Player.MaxMana += 5
+                Write-Host "Maximum Mana permanently increased by 5!" -ForegroundColor Green
+            }
+            '6' {
                 $global:Player.CriticalChance += 5
                 Write-Host "Critical chance increased by 5%! Current: $($global:Player.CriticalChance)%" -ForegroundColor Cyan
             }
-            '6' {
+            '7' {
                 $global:Player.CriticalMultiplier += 0.5
                 Write-Host "Critical multiplier increased by 0.5! Current: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
             }
-	   '7' {
+	    '8' {
 		if ($global:PlayerArtifacts.Count -eq 0) {
 		    Write-Host "You have no artifacts to sell!" -ForegroundColor Red
 		    return
