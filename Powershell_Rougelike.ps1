@@ -5,7 +5,7 @@ $global:Player = $null
 $global:GameRunning = $true
 $global:CurrentFloor = 1
 $global:MonstersDefeated = 0
-$global:BossesDefeated = 0
+$global:BossesDefeated = 1
 
 # Typewriter effect function - Testing. 
 function Write-Typewriter {
@@ -227,7 +227,7 @@ function Get-RandomMonster {
 		$boss.CriticalMultiplier = 2.0  # Bosses do 2x critical damage 
         # Add special boss abilities - TODO: Need more variant and random modifider.
         $boss.IsBoss = $true
-        $boss.SpecialAbility = "Power Attack"  # Bosses hit harder
+        $boss.SpecialAbility = "Power Attack"  # Need more variant
         
         Write-Typewriter "`n*** BOSS ENCOUNTER! ***" -ForegroundColor Red
         return $boss
@@ -236,7 +236,7 @@ function Get-RandomMonster {
         $monsterIndex = [Math]::Min([Math]::Floor(($global:CurrentFloor - 1) / 2), $MonsterTypes.Count - 1)
         $baseMonster = $MonsterTypes[$monsterIndex].Clone()
         
-# Scale monster stats based on floor level - increased scaling
+# Scale monster stats calculation based on floor level
 	$scaleFactor = 1 + ($global:CurrentFloor * 0.15)
 	$baseMonster.Health = [Math]::Round($baseMonster.Health * $scaleFactor)
 	$baseMonster.Attack = [Math]::Round($baseMonster.Attack * $scaleFactor)
@@ -476,8 +476,8 @@ function Visit-Shop {
         @{ Name = "Mana Potion"; Cost = 12; Description = "Restore 20 Mana" },
         @{ Name = "Attack Boost"; Cost = 50; Description = "Permanently +2 Attack" },
         @{ Name = "Defense Boost"; Cost = 50; Description = "Permanently +2 Defense" },
-        @{ Name = "Critical Charm"; Cost = 75; Description = "Permanently +5% Critical Chance" },
-        @{ Name = "Keen Edge"; Cost = 100; Description = "Permanently +0.5 Critical Multiplier" }
+        @{ Name = "Critical Charm"; Cost = 95; Description = "Permanently +5% Critical Chance" },
+        @{ Name = "Keen Edge"; Cost = 180; Description = "Permanently +0.5 Critical Multiplier" }
     )
     
     for ($i = 0; $i -lt $shopItems.Count; $i++) {
@@ -546,7 +546,7 @@ function Start-Game {
                     Level-Up
                 } else {
                     if ($global:Player.Health -le 0) {
-                        Write-Typewriter "`nGAME OVER" -ForegroundColor DarkRed
+                        Write-Typewriter "`nYou feel your body is fadind and going numb. Is this the end?" -ForegroundColor DarkRed
                         Write-Host "You reached floor $global:CurrentFloor and defeated $global:MonstersDefeated monsters!" -ForegroundColor Yellow
                         $global:GameRunning = $false
                     }
@@ -575,7 +575,7 @@ function Start-Game {
             }
             '6' {
                 $global:GameRunning = $false
-                Write-Host "Thanks for playing!" -ForegroundColor Green
+                Write-Host "You've perished into a dark realm, never to return." -ForegroundColor Green
             }
             default {
                 Write-Host "Invalid choice!" -ForegroundColor Red
