@@ -561,7 +561,7 @@ function Get-RandomMonster {
     } else {
         # Gradually increasing chance on non-boss floors based on floor level
         $baseChance = 0.5   # Base 0.5% chance on normal floors
-        $floorBonus = [Math]::Min($global:CurrentFloor * 0.05, 1)  # +0.05% per floor, max +1% to prevent early death
+        $floorBonus = [Math]::Min($global:CurrentFloor * 0.05, 0.1)  # +0.05% per floor, max +0.1% to prevent early death
         $bossChance = $baseChance + $floorBonus
     }
     
@@ -571,7 +571,7 @@ function Get-RandomMonster {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
         # Scale boss stats based on player level and stats (balance as needed)
-		$scaleFactor = 1 + ($global:Player.Level * 0.3) + ($global:Player.Attack * 0.05) + ($global:CurrentFloor * 0.3) + ($global:Player.ExperienceToNextLevel * 0.00005)
+		$scaleFactor = 1 + ($global:Player.Level * 0.05) + ($global:Player.Attack * 0.05) + ($global:CurrentFloor * 0.1) + ($global:Player.ExperienceToNextLevel * 0.00005)
 		$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
 		$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
 		$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
