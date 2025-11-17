@@ -33,9 +33,27 @@ function Write-Quick {
     $chars = $Text.ToCharArray()
     foreach ($char in $chars) {
         Write-Host $char -NoNewline -ForegroundColor $Color
-        Start-Sleep -Milliseconds 5
+        Start-Sleep -Milliseconds 0.2
     }
+    Write-Host "" #page break
+}
+
+function Show-WelcomeScreen {
+    Clear-Host
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host "         POWERSHELL RPG ADVENTURE" -ForegroundColor Yellow
+    Write-Host "==========================================" -ForegroundColor Cyan
     Write-Host ""
+    Write-Host "Welcome to the dungeon crawler!" -ForegroundColor White
+    Write-Host "Defeat monsters, collect artifacts, and descend deeper!" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Controls:" -ForegroundColor Yellow
+    Write-Host "  - Use number keys to select options" -ForegroundColor Gray
+    Write-Host "  - Press any key to skip text animations" -ForegroundColor Gray
+    Write-Host "  - Manage your health and mana carefully" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Press any key to begin your adventure..." -ForegroundColor Green
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
 # Class Definitions
@@ -333,7 +351,7 @@ $HighTierArtifacts = @(
 function Show-Title {
     Clear-Host
     Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host "         POWER ROUGE SHELL       " -ForegroundColor Yellow
+    Write-Host "         POWERSHELL RPG ADVENTURE" -ForegroundColor Yellow
     Write-Host "==========================================" -ForegroundColor Cyan
     Write-Host ""
 }
@@ -344,7 +362,7 @@ function New-Player {
     Write-Host ""
     Write-Typewriter "It's dark, damp garderobe where your body lies, a voice called out to ask your name." -Color Yellow -Delay 30    
     Write-Typewriter "You've awaken without a memory, but you remembered your name." -Color Yellow -Delay 30    
-    $name = Read-Host "My name is: "
+    $name = Read-Host "My name is"
     
     Write-Host "`nChoose your class:" -ForegroundColor Yellow
     $i = 1
@@ -406,6 +424,76 @@ function Show-PlayerStats {
     Write-Host "Critical Chance: $($global:Player.CriticalChance)%" -ForegroundColor Cyan
     Write-Host "Critical Multiplier: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
     Write-Host "Gold: $($global:Player.Gold)" -ForegroundColor Yellow
+}
+
+function Show-GameOverScreen {
+    Clear-Host
+    Write-Host "==========================================" -ForegroundColor DarkRed
+    Write-Host "               GAME OVER" -ForegroundColor Red
+    Write-Host "==========================================" -ForegroundColor DarkRed
+    Write-Host ""
+    
+    Write-Host "You feel numb from the wound. You felt cold as your soul consumed by the Dark Lord" -ForegroundColor Gray
+    Write-Host "Your journey ends here.." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Final Stats:" -ForegroundColor Yellow
+    Write-Host "  Reached Floor: $global:CurrentFloor" -ForegroundColor White
+    Write-Host "  Monsters Defeated: $global:MonstersDefeated" -ForegroundColor White
+    Write-Host "  Bosses Defeated: $global:BossesDefeated" -ForegroundColor White
+    Write-Host "  Artifacts Collected: $($global:PlayerArtifacts.Count)" -ForegroundColor White
+    Write-Host "  Final Level: $($global:Player.Level)" -ForegroundColor White
+    
+    if ($global:Player.Ascension) {
+        Write-Host "  Ascension: $($global:Player.Ascension)" -ForegroundColor Magenta
+    }
+    Write-Host ""
+    
+    # Show achievements based on performance
+    if ($global:CurrentFloor -ge 10) {
+        Write-Host "🏆 Deep Explorer: Reached floor 10 or higher!" -ForegroundColor Cyan
+    }
+    if ($global:BossesDefeated -ge 5) {
+        Write-Host "🏆 Boss Slayer: Defeated 5 or more bosses!" -ForegroundColor Yellow
+    }
+    if ($global:Player.Level -ge 10) {
+        Write-Host "🏆 Veteran Adventurer: Reached level 10 or higher!" -ForegroundColor Green
+    }
+    if ($global:PlayerArtifacts.Count -ge 3) {
+        Write-Host "🏆 Artifact Collector: Found 3 or more artifacts!" -ForegroundColor Magenta
+    }
+    
+    Write-Host ""
+    Write-Host "What would you like to do?" -ForegroundColor Yellow
+    Write-Host "1. Start New Game" -ForegroundColor Green
+    Write-Host "2. Exit Game" -ForegroundColor Red
+    Write-Host ""
+    
+    do {
+        $choice = Read-Host "Select option (1-2)"
+    } while ($choice -notin @('1','2'))
+    
+    switch ($choice) {
+        '1' {
+            # Reset game state and start over
+            Initialize-GameState
+            Start-Game
+        }
+        '2' {
+            Write-Host "`nThanks for playing!" -ForegroundColor Green
+            Write-Host "Press any key to exit..." -ForegroundColor Gray
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+            exit
+        }
+    }
+}
+
+function Initialize-GameState {
+    $global:Player = $null
+    $global:GameRunning = $true
+    $global:CurrentFloor = 1
+    $global:MonstersDefeated = 0
+    $global:BossesDefeated = 0
+    $global:PlayerArtifacts = @()
 }
 
 function Show-Spells {
@@ -561,7 +649,7 @@ function Start-Combat {
     $playerTurn = $global:Player.Speed -ge (Get-Random -Minimum 1 -Maximum 10)
 
     while ($monsterHealth -gt 0 -and $global:Player.Health -gt 0) {
-           if ($playerTurn) {
+	if ($playerTurn) {
 	    Write-Host "`n=== YOUR TURN ===" -ForegroundColor Green
 	    Write-Host "1. Attack"
 	    
@@ -586,18 +674,30 @@ function Start-Combat {
 			Write-Host "$spellNumber. $($spell.Name) - $($spell.Description) (Mana: $($spell.ManaCost), Heal: ~$estimatedHeal)"
 		    }
 		}
-		$potionOption = $spells.Count + 2
-		Write-Host "$potionOption. Use Potion (5 gold)"
-		Write-Host "$($potionOption + 1). Flee"
 	    } else {
-		Write-Host "2. Special Ability"
-		Write-Host "3. Use Potion (5 gold)"
-		Write-Host "4. Flee"
+		# Special ability for non-spellcasters
+		Write-Host "2. Special Ability" -ForegroundColor White
 	    }
 	    
-	    $choice = Read-Host "Choose action" 
+	    # Standardized options for all classes
+	    Write-Host "6. Use Potion (5 gold)" -ForegroundColor White
+	    Write-Host "7. Flee" -ForegroundColor White
+	    
+	    $choice = Read-Host "Choose action"
+	    # Validate input based on class
+		if ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric") {
+		    $validChoices = @('1','2','3','4','5','6','7')
+		} else {
+		    $validChoices = @('1','2','6','7')
+		}
+
+		if ($choice -notin $validChoices) {
+		    Write-Host "Invalid choice! Please select a valid option." -ForegroundColor Red
+		    continue
+		}
 		switch ($choice) {
 		    '1' {
+			# Regular attack for all classes
 			$baseDamage = [Math]::Max(1, $global:Player.Attack - $monster.Defense + (Get-Random -Minimum -2 -Maximum 3))
 			
 			# Critical hit check
@@ -611,122 +711,126 @@ function Start-Combat {
 			}
 			$monsterHealth -= $damage
 		    }
-		{($_ -ge '2' -and $_ -le '5') -and ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric")} {
-		    $spellIndex = [int]$choice - 2
-		    $spells = $ClassSpells[$global:Player.Class]
 		    
-		    if ($spellIndex -lt $spells.Count) {
-			$selectedSpell = $spells[$spellIndex]
+		    # Spells for Mage and Cleric (options 2-5)
+		    {($_ -ge '2' -and $_ -le '5') -and ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric")} {
+			$spellIndex = [int]$choice - 2
+			$spells = $ClassSpells[$global:Player.Class]
 			
-			if ($global:Player.Mana -ge $selectedSpell.ManaCost) {
-			    $global:Player.Mana -= $selectedSpell.ManaCost
+			if ($spellIndex -lt $spells.Count) {
+			    $selectedSpell = $spells[$spellIndex]
 			    
-			    if ($selectedSpell.Type -eq "Damage") {
-				# Calculate spell damage using the new simplified structure
-				$baseSpellDamage = [Math]::Round($selectedSpell.BaseDamage + ($global:Player.Level * $selectedSpell.DamagePerLevel) + ($global:Player.Attack * $selectedSpell.DamagePerAttack))
+			    if ($global:Player.Mana -ge $selectedSpell.ManaCost) {
+				$global:Player.Mana -= $selectedSpell.ManaCost
 				
-				# Apply elemental bonus if applicable
-				$elementalBonus = 1.0
-				$elementDescription = ""
-				if ($selectedSpell.Element -and $ElementalEffects.ContainsKey($selectedSpell.Element)) {
-				    $elementalBonus = $ElementalEffects[$selectedSpell.Element].BonusDamage
-				    $elementDescription = $ElementalEffects[$selectedSpell.Element].Description
-				}
-				
-				$spellDamage = [Math]::Round($baseSpellDamage * $elementalBonus)
-				
-				# Critical hit check for spells (higher chance)
-				$isCritical = (Get-Random -Maximum 100) -lt ($global:Player.CriticalChance + 5)
-				if ($isCritical) {
-				    $spellDamage = [Math]::Round($spellDamage * $global:Player.CriticalMultiplier)
-				    if ($elementDescription) {
-					Write-Typewriter "CRITICAL HIT! You cast $($selectedSpell.Name) and it $elementDescription for $spellDamage damage!" -Color Cyan -Delay 20
-				    } else {
-					Write-Typewriter "CRITICAL HIT! You cast $($selectedSpell.Name) for $spellDamage damage!" -Color Cyan -Delay 20
+				if ($selectedSpell.Type -eq "Damage") {
+				    # Calculate spell damage
+				    $baseSpellDamage = [Math]::Round($selectedSpell.BaseDamage + ($global:Player.Level * $selectedSpell.DamagePerLevel) + ($global:Player.Attack * $selectedSpell.DamagePerAttack))
+				    
+				    # Apply elemental bonus if applicable
+				    $elementalBonus = 1.0
+				    $elementDescription = ""
+				    if ($selectedSpell.Element -and $ElementalEffects.ContainsKey($selectedSpell.Element)) {
+					$elementalBonus = $ElementalEffects[$selectedSpell.Element].BonusDamage
+					$elementDescription = $ElementalEffects[$selectedSpell.Element].Description
 				    }
-				} else {
-				    if ($elementDescription) {
-					Write-Typewriter "You cast $($selectedSpell.Name) and it $elementDescription for $spellDamage damage!" -Color Magenta -Delay 20
+				    
+				    $spellDamage = [Math]::Round($baseSpellDamage * $elementalBonus)
+				    
+				    # Critical hit check for spells
+				    $isCritical = (Get-Random -Maximum 100) -lt ($global:Player.CriticalChance + 5)
+				    if ($isCritical) {
+					$spellDamage = [Math]::Round($spellDamage * $global:Player.CriticalMultiplier)
+					if ($elementDescription) {
+					    Write-Typewriter "CRITICAL HIT! You cast $($selectedSpell.Name) and it $elementDescription for $spellDamage damage!" -Color Cyan -Delay 20
+					} else {
+					    Write-Typewriter "CRITICAL HIT! You cast $($selectedSpell.Name) for $spellDamage damage!" -Color Cyan -Delay 20
+					}
 				    } else {
-					Write-Typewriter "You cast $($selectedSpell.Name) for $spellDamage damage!" -Color Magenta -Delay 20
+					if ($elementDescription) {
+					    Write-Typewriter "You cast $($selectedSpell.Name) and it $elementDescription for $spellDamage damage!" -Color Magenta -Delay 20
+					} else {
+					    Write-Typewriter "You cast $($selectedSpell.Name) for $spellDamage damage!" -Color Magenta -Delay 20
+					}
 				    }
+				    
+				    # Apply spell effects
+				    if ($selectedSpell.Effect -eq "Slow") {
+					Write-Host "The $($monster.Name) is slowed!" -ForegroundColor Blue
+				    } elseif ($selectedSpell.Effect -eq "Stun" -and (Get-Random -Maximum 100) -lt 10) {
+					$playerTurn = $true
+					Write-Host "The $($monster.Name) is stunned and loses its turn!" -ForegroundColor Yellow
+				    }
+				    
+				    $monsterHealth -= $spellDamage
+				    
+				} elseif ($selectedSpell.Type -eq "Heal") {
+				    # Calculate heal
+				    if ($selectedSpell.HealPerMaxHealth) {
+					$healAmount = [Math]::Round($selectedSpell.BaseHeal + ($global:Player.Level * $selectedSpell.HealPerLevel) + ($global:Player.MaxHealth * $selectedSpell.HealPerMaxHealth))
+				    } else {
+					$healAmount = [Math]::Round($selectedSpell.BaseHeal + ($global:Player.Level * $selectedSpell.HealPerLevel))
+				    }
+				    
+				    $oldHealth = $global:Player.Health
+				    $global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $healAmount)
+				    $actualHeal = $global:Player.Health - $oldHealth
+				    
+				    Write-Typewriter "You cast $($selectedSpell.Name) and heal $actualHeal health!" -Color Green -Delay 20
+				    Write-Host "Current HP: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Green
 				}
-				
-				# Apply spell effects
-				if ($selectedSpell.Effect -eq "Slow") {
-				    # Reduce monster speed (affects turn order)
-				    Write-Host "The $($monster.Name) is slowed!" -ForegroundColor Blue
-				} elseif ($selectedSpell.Effect -eq "Stun" -and (Get-Random -Maximum 100) -lt 10) {
-				    $playerTurn = $true  # Player gets another turn
-				    Write-Host "The $($monster.Name) is stunned and loses its turn!" -ForegroundColor Yellow
-				}
-				
-				$monsterHealth -= $spellDamage
-				
-			    } elseif ($selectedSpell.Type -eq "Heal") {
-				# Calculate heal using the new simplified structure
-				if ($selectedSpell.HealPerMaxHealth) {
-				    $healAmount = [Math]::Round($selectedSpell.BaseHeal + ($global:Player.Level * $selectedSpell.HealPerLevel) + ($global:Player.MaxHealth * $selectedSpell.HealPerMaxHealth))
-				} else {
-				    $healAmount = [Math]::Round($selectedSpell.BaseHeal + ($global:Player.Level * $selectedSpell.HealPerLevel))
-				}
-				
-				$oldHealth = $global:Player.Health
-				$global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $healAmount)
-				$actualHeal = $global:Player.Health - $oldHealth
-				
-				Write-Typewriter "You cast $($selectedSpell.Name) and heal $actualHeal health!" -Color Green -Delay 20
-				Write-Host "Current HP: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Green
+			    } else {
+				Write-Host "Not enough mana! You need $($selectedSpell.ManaCost) mana." -ForegroundColor Red
+				continue
 			    }
 			} else {
-			    Write-Host "Not enough mana! You need $($selectedSpell.ManaCost) mana." -ForegroundColor Red
+			    Write-Host "Invalid spell selection!" -ForegroundColor Red
 			    continue
 			}
-		    } else {
-			Write-Host "Invalid spell selection!" -ForegroundColor Red
-			continue
 		    }
-		}
-		    {($_ -eq '2' -and $global:Player.Class -ne "Mage" -and $global:Player.Class -ne "Cleric") -or 
-		     ($_ -eq '6' -and ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric"))} {
-			# Special Ability for non-spellcasters or Potion for spellcasters
-			$actualChoice = if ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric") { '3' } else { $choice }
-			
-			switch ($actualChoice) {
-			    '2' {
-				if ($global:Player.Mana -ge 5) {
-				    $global:Player.Mana -= 5
-				    $specialDamage = $global:Player.Attack + (Get-Random -Minimum 2 -Maximum 6)
-				    $monsterHealth -= $specialDamage
-				    Write-Host "You use a special ability for $specialDamage damage!" -ForegroundColor Magenta
-				} else {
-				    Write-Host "Not enough mana!" -ForegroundColor Red
-				    continue
-				}
-			    }
-			    '3' {
-				if ($global:Player.Gold -ge 5) {
-				    $global:Player.Gold -= 5
-				    
-				    # Scaled healing based on player level and max health
-				    $baseHeal = 20
-				    $levelBonus = $global:Player.Level * 3
-				    $healthPercentage = $global:Player.MaxHealth * 0.15
-				    $heal = $baseHeal + $levelBonus + [Math]::Round($healthPercentage)
-				    
-				    $global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $heal)
-				    Write-Host "You use a potion and heal $heal health!" -ForegroundColor Green
-				} else {
-				    Write-Host "Not enough gold!" -ForegroundColor Red
-				    continue
-				}
-			    }
+		    
+		    # Special ability for non-spellcasters (option 2)
+		    {$_ -eq '2' -and $global:Player.Class -ne "Mage" -and $global:Player.Class -ne "Cleric"} {
+			if ($global:Player.Mana -ge 5) {
+			    $global:Player.Mana -= 5
+			    $specialDamage = $global:Player.Attack + (Get-Random -Minimum 2 -Maximum 6)
+			    $monsterHealth -= $specialDamage
+			    Write-Host "You use a special ability for $specialDamage damage!" -ForegroundColor Magenta
+			} else {
+			    Write-Host "Not enough mana!" -ForegroundColor Red
+			    continue
 			}
 		    }
-		    {($_ -eq '4' -and $global:Player.Class -ne "Mage" -and $global:Player.Class -ne "Cleric") -or 
-		     ($_ -eq '7' -and ($global:Player.Class -eq "Mage" -or $global:Player.Class -eq "Cleric"))} {
+		    
+		    # Potion for all classes (option 6)
+		    '6' {
+			if ($global:Player.Gold -ge 5) {
+			    $global:Player.Gold -= 5
+			    
+			    # Scaled healing
+			    $baseHeal = 20
+			    $levelBonus = $global:Player.Level * 3
+			    $healthPercentage = $global:Player.MaxHealth * 0.15
+			    $heal = $baseHeal + $levelBonus + [Math]::Round($healthPercentage)
+			    
+			    $oldHealth = $global:Player.Health
+			    $global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + $heal)
+			    $actualHeal = $global:Player.Health - $oldHealth
+			    
+			    Write-Host "You use a potion and heal $actualHeal health!" -ForegroundColor Green
+			    Write-Host "Current HP: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Green
+			} else {
+			    Write-Host "Not enough gold!" -ForegroundColor Red
+			    continue
+			}
+		    }
+		    
+		    # Flee for all classes (option 7)
+		    '7' {
 			if ((Get-Random -Maximum 100) -lt 40) {
 			    Write-Host "You successfully fled from combat!" -ForegroundColor Green
+			    Write-Host "Press any key to continue..." -ForegroundColor Gray
+			    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 			    return $false
 			} else {
 			    Write-Host "Failed to flee!" -ForegroundColor Red
@@ -737,6 +841,7 @@ function Start-Combat {
 			continue
 		    }
 		}
+
 	       } else {
 	    Write-Typewriter "`n=== MONSTER'S TURN ===" -ForegroundColor Red
 	    
@@ -842,22 +947,50 @@ function Start-Combat {
 	    }
 	    
 	    if ($global:Player.Health -le 0) {
-		Write-Typewriter "`nYou have been defeated..." -ForegroundColor DarkRed
-		return $false
+		    Write-Host "`n==========================================" -ForegroundColor DarkRed
+		    Write-Host "          YOU HAVE BEEN DEFEATED" -ForegroundColor Red
+		    Write-Host "==========================================" -ForegroundColor DarkRed
+		    Write-Host ""
+		    Write-Host "As your vision fades, you feel the cold embrace of death..." -ForegroundColor Gray
+		    Write-Host ""
+		        Write-Host ""   
+		    # Different death messages based on progress
+		    if ($global:CurrentFloor -le 3) {
+			Write-Host "Your adventure ends before it truly began..." -ForegroundColor Gray
+		    } elseif ($global:CurrentFloor -le 7) {
+			Write-Host "You fought bravely, but the dungeon proved too formidable..." -ForegroundColor Gray
+		    } elseif ($global:CurrentFloor -le 12) {
+			Write-Host "A valiant effort, but even heroes must fall..." -ForegroundColor Gray
+		    } else {
+			Write-Host "You ventured deeper than most, but even legends must end..." -ForegroundColor Gray
+		    }
+		    
+		    Write-Host ""
+		    Write-Host "Press any key to face your fate..." -ForegroundColor Gray
+		    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+		    return $false
 	    } else {
-		Write-Host "`nYou defeated the $($monster.Name)!" -ForegroundColor Green
-		$goldEarned = $monster.Gold
-		$xpEarned = $monster.XP
-		$global:Player.Gold += $goldEarned
-		$global:Player.Experience += $xpEarned
-		$global:MonstersDefeated++
-		if ($monster.IsBoss) {
-	    $global:BossesDefeated++
-	    Write-Typewriter "*** BOSS DEFEATED! ***" -ForegroundColor Magenta
-		}    
-		Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
-		return $true
-	    }
+			Write-Host "`nYou defeated the $($monster.Name)!" -ForegroundColor Green
+			$goldEarned = $monster.Gold
+			$xpEarned = $monster.XP
+			$global:Player.Gold += $goldEarned
+			$global:Player.Experience += $xpEarned
+			$global:MonstersDefeated++
+
+			if ($monster.IsBoss) {
+			    $global:BossesDefeated++
+			    Write-Host "*** BOSS DEFEATED! ***" -ForegroundColor Magenta
+			}
+
+			Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
+
+# Check for level up after combat victory
+			Level-Up
+
+			Write-Host "Press any key to continue..." -ForegroundColor Gray
+			$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+			return $true	   
+			}
 			# Reset any temporary stat changes after combat
 		if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
 		# Reset to base + level progression (simplified calculation)
@@ -1057,6 +1190,44 @@ function Show-GameMenu {
     Write-Host "0. Quit Game"
 }
 
+function Show-ExitScreen {
+    Clear-Host
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host "          EXITING GAME" -ForegroundColor Yellow
+    Write-Host "==========================================" -ForegroundColor Cyan
+    Write-Host ""
+    
+    Write-Host "Your current progress:" -ForegroundColor White
+    Write-Host "  Current Floor: $global:CurrentFloor" -ForegroundColor Gray
+    Write-Host "  Monsters Defeated: $global:MonstersDefeated" -ForegroundColor Gray
+    Write-Host "  Bosses Defeated: $global:BossesDefeated" -ForegroundColor Gray
+    Write-Host "  Artifacts Collected: $($global:PlayerArtifacts.Count)" -ForegroundColor Gray
+    Write-Host "  Current Level: $($global:Player.Level)" -ForegroundColor Gray
+    Write-Host ""
+    
+    Write-Host "Are you sure you want to exit?" -ForegroundColor Yellow
+    Write-Host "1. Continue Playing" -ForegroundColor Green
+    Write-Host "2. Exit Game" -ForegroundColor Red
+    Write-Host ""
+    
+    do {
+        $choice = Read-Host "Select option (1-2)"
+    } while ($choice -notin @('1','2'))
+    
+    switch ($choice) {
+        '1' {
+            Write-Host "Continuing your adventure..." -ForegroundColor Green
+            return $true
+        }
+        '2' {
+            Write-Host "`nThanks for playing! Your adventure awaits another day." -ForegroundColor Green
+            Write-Host "Press any key to exit..." -ForegroundColor Gray
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+            exit
+        }
+    }
+}
+
 # Shop Inventory and logic - TODO Make the Item balance to prevent over leveled bruteforce
 
 function Visit-Shop {
@@ -1172,6 +1343,7 @@ function Visit-Shop {
 }
 
 function Start-Game {
+    Show-WelcomeScreen
     New-Player
     
     while ($global:GameRunning -and $global:Player.Health -gt 0) {
@@ -1187,12 +1359,11 @@ function Start-Game {
                 if ($victory) {
                     Level-Up
                 } else {
-                    if ($global:Player.Health -le 0) {
-                        Write-Typewriter "`nYou feel your body is fadind and going numb. Is this the end?" -ForegroundColor DarkRed
-                        Write-Host "You reached floor $global:CurrentFloor and defeated $global:MonstersDefeated monsters!" -ForegroundColor Yellow
-                        $global:GameRunning = $false
-                    }
-                }
+			if ($global:Player.Health -le 0) {
+			    Show-GameOverScreen
+			}
+
+		}
             }
             '2' {
                 if ($global:Player.Gold -ge 10) {
@@ -1222,23 +1393,35 @@ function Start-Game {
                 Write-Host "Monsters grow stronger!" -ForegroundColor Yellow
             }
             '0' {
-                $global:GameRunning = $false
-                Write-Host "You've perished into a dark realm, never to return." -ForegroundColor Green
+		$continuePlaying = Show-ExitScreen
+		if (!$continuePlaying) {
+			$global:GameRunning = $false
+		}
             }
             default {
                 Write-Host "Invalid choice!" -ForegroundColor Red
             }
         }
         
-        if ($global:GameRunning) {
-            Write-Host "`nPress any key to continue..." -ForegroundColor Gray
-            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        }
+	if ($global:GameRunning -and $choice -ne '1') {
+	    Write-Host "`nPress any key to continue..." -ForegroundColor Gray
+	    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+	}
     }
 }
 
 # Start the game
-Start-Game
+try {
+    Start-Game
+}
+catch {
+    Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Press any key to exit..." -ForegroundColor Gray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+finally {
+    Write-Host "`nGame session ended." -ForegroundColor Gray
+}
 
 
 
