@@ -588,7 +588,7 @@ function Get-RandomMonster {
 		$boss.SpecialMultiplier = $randomAbility.DamageMultiplier
 		$boss.SpecialEffect = $randomAbility.Effect
         
-        Write-Typewriter "`n*** BOSS ENCOUNTER! ***" -ForegroundColor Red
+        Write-Typewriter "`n*** BOSS ENCOUNTER! ***" -ForegroundColor Red -Delay 50
         return $boss
     } else {
 	    # Automatic tier-based monster selection
@@ -1016,7 +1016,7 @@ function Start-Combat {
 		    Write-Host "Press any key to face your fate..." -ForegroundColor Gray
 		    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 		    return $false
-	    } else {
+		    } else {
 			Write-Host "`nYou defeated the $($monster.Name)!" -ForegroundColor Green
 			$goldEarned = $monster.Gold
 			$xpEarned = $monster.XP
@@ -1034,56 +1034,57 @@ function Start-Combat {
 			# Check for level up after combat victory
 			Level-Up
 
+			# Check for artifact drops
+			if ($victory) {
+			    # Check for low tier artifact from normal monsters (2% chance)
+			    if (!$monster.IsBoss -and (Get-Random -Maximum 100) -lt 2) {
+				$newArtifact = Get-RandomArtifact -Tier "Low"
+				if ($global:PlayerArtifacts.Count -lt $global:MaxArtifacts) {
+				    $global:PlayerArtifacts += $newArtifact
+				    Apply-ArtifactStats -Artifact $newArtifact
+				    Write-Typewriter "*** You found a rare artifact: $($newArtifact.Name) ***" -Color Yellow -Delay 40
+				    Write-Host "$($newArtifact.Description)" -ForegroundColor Gray
+				    Show-ArtifactStats -Artifact $newArtifact
+				} else {
+				    Write-Host "You found an artifact but your inventory is full!" -ForegroundColor Yellow
+				}
+			    }
+			    
+			# Check for high tier artifact from bosses (5% chance)
+			    if ($monster.IsBoss -and (Get-Random -Maximum 100) -lt 5) {
+				$newArtifact = Get-RandomArtifact -Tier "High"
+				if ($global:PlayerArtifacts.Count -lt $global:MaxArtifacts) {
+				    $global:PlayerArtifacts += $newArtifact
+				    Apply-ArtifactStats -Artifact $newArtifact
+				    Write-Typewriter "*** The boss dropped a legendary artifact: $($newArtifact.Name) ***" -Color Magenta -Delay 50
+				    Write-Host "$($newArtifact.Description)" -ForegroundColor Gray
+				    Show-ArtifactStats -Artifact $newArtifact
+				} else {
+				    Write-Host "The boss dropped an artifact but your inventory is full!" -ForegroundColor Yellow
+				}
+			    }
+			}
+
 			Write-Host "Press any key to continue..." -ForegroundColor Gray
 			$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 			return $true	   
 			}
 			# Reset any temporary stat changes after combat
-		if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
-		# Reset to base + level progression (simplified calculation)
-		$global:Player.Attack = $ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2)
-		if ($global:Player.Ascension) {
-		    $global:Player.Attack += $AscensionBonuses[$global:Player.Ascension].Attack
-		}
-	    }
-	    
-	    if ($global:Player.Defense -lt ($ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1))) {
-		# Reset to base + level progression
-		$global:Player.Defense = $ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1)
-		if ($global:Player.Ascension) {
-		    $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
-			}
-		}
-		# Check for artifact drops
-		if ($victory) {
-		    # Check for low tier artifact from normal monsters (2% chance)
-		    if (!$monster.IsBoss -and (Get-Random -Maximum 100) -lt 2) {
-			$newArtifact = Get-RandomArtifact -Tier "Low"
-			if ($global:PlayerArtifacts.Count -lt $global:MaxArtifacts) {
-			    $global:PlayerArtifacts += $newArtifact
-			    Apply-ArtifactStats -Artifact $newArtifact
-			    Write-Typewriter "*** You found a rare artifact: $($newArtifact.Name) ***" -Color Yellow -Delay 40
-			    Write-Host "$($newArtifact.Description)" -ForegroundColor Gray
-			    Show-ArtifactStats -Artifact $newArtifact
-			} else {
-			    Write-Host "You found an artifact but your inventory is full!" -ForegroundColor Yellow
-			}
-		    }
-		    
-		# Check for high tier artifact from bosses (5% chance)
-		    if ($monster.IsBoss -and (Get-Random -Maximum 100) -lt 5) {
-			$newArtifact = Get-RandomArtifact -Tier "High"
-			if ($global:PlayerArtifacts.Count -lt $global:MaxArtifacts) {
-			    $global:PlayerArtifacts += $newArtifact
-			    Apply-ArtifactStats -Artifact $newArtifact
-			    Write-Typewriter "*** The boss dropped a legendary artifact: $($newArtifact.Name) ***" -Color Magenta -Delay 50
-			    Write-Host "$($newArtifact.Description)" -ForegroundColor Gray
-			    Show-ArtifactStats -Artifact $newArtifact
-			} else {
-			    Write-Host "The boss dropped an artifact but your inventory is full!" -ForegroundColor Yellow
-			}
-		    }
-		}
+				if ($global:Player.Attack -lt ($ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2))) {
+				# Reset to base + level progression (simplified calculation)
+				$global:Player.Attack = $ClassDefinitions[$global:Player.Class].Attack + ($global:Player.Level * 2)
+				if ($global:Player.Ascension) {
+				    $global:Player.Attack += $AscensionBonuses[$global:Player.Ascension].Attack
+				}
+			    }
+			    
+			    if ($global:Player.Defense -lt ($ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1))) {
+				# Reset to base + level progression
+				$global:Player.Defense = $ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1)
+				if ($global:Player.Ascension) {
+				    $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
+					}
+				}
 
 }
 
