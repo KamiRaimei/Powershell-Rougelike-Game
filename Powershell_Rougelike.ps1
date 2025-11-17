@@ -234,20 +234,38 @@ $ElementalEffects = @{
     }
 }
 
-# Monster Definitions - TODO: Need more monster variant
+# Monster Definitions - New tier based array
 $MonsterTypes = @(
-    @{ Name = "Goblin"; Health = 12; Attack = 4; Defense = 2; XP = 10; Gold = 5 },
-    @{ Name = "Skeleton"; Health = 15; Attack = 5; Defense = 3; XP = 15; Gold = 8 },
-    @{ Name = "Orc"; Health = 20; Attack = 6; Defense = 4; XP = 20; Gold = 12 },
-    @{ Name = "Dark Mage"; Health = 18; Attack = 7; Defense = 2; XP = 25; Gold = 15 },
-    @{ Name = "Troll"; Health = 30; Attack = 8; Defense = 5; XP = 35; Gold = 20 },
-    @{ Name = "Dragon Whelp"; Health = 25; Attack = 9; Defense = 4; XP = 40; Gold = 25 },
-    @{ Name = "Vampire Bat"; Health = 16; Attack = 6; Defense = 1; XP = 18; Gold = 10 },
-    @{ Name = "Stone Golem"; Health = 35; Attack = 7; Defense = 8; XP = 45; Gold = 22 },
-    @{ Name = "Frost Elemental"; Health = 22; Attack = 8; Defense = 3; XP = 30; Gold = 18 },
-    @{ Name = "Lich"; Health = 28; Attack = 10; Defense = 4; XP = 50; Gold = 30 },
-    @{ Name = "Behemoth"; Health = 45; Attack = 12; Defense = 6; XP = 65; Gold = 40 },
-    @{ Name = "Chaos Demon"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50 }
+    # Tier 1: Early game monsters
+    @{ Name = "Goblin"; Health = 12; Attack = 4; Defense = 2; XP = 10; Gold = 5; Tier = 1 },
+    @{ Name = "Skeleton"; Health = 15; Attack = 5; Defense = 3; XP = 15; Gold = 8; Tier = 1 },
+    @{ Name = "Vampire Bat"; Health = 16; Attack = 6; Defense = 1; XP = 18; Gold = 10; Tier = 1 },
+    @{ Name = "Bandit"; Health = 20; Attack = 5; Defense = 2; XP = 18; Gold = 10; Tier = 1 },
+    @{ Name = "Giant Spider"; Health = 14; Attack = 5; Defense = 2; XP = 12; Gold = 6; Tier = 1 },
+
+    # Tier 2: Early-mid game monsters
+    @{ Name = "Orc"; Health = 20; Attack = 6; Defense = 4; XP = 20; Gold = 12; Tier = 2 },
+    @{ Name = "Dark Mage"; Health = 18; Attack = 7; Defense = 2; XP = 25; Gold = 15; Tier = 2 },
+    @{ Name = "Frost Elemental"; Health = 22; Attack = 8; Defense = 3; XP = 30; Gold = 18; Tier = 2 },
+    @{ Name = "Demon Hound"; Health = 28; Attack = 8; Defense = 3; XP = 30; Gold = 18; Tier = 2 },
+    
+    # Tier 3: Mid game monsters
+    @{ Name = "Troll"; Health = 30; Attack = 8; Defense = 5; XP = 35; Gold = 20; Tier = 3 },
+    @{ Name = "Dragon Whelp"; Health = 25; Attack = 9; Defense = 4; XP = 40; Gold = 25; Tier = 3 },
+    @{ Name = "Stone Golem"; Health = 35; Attack = 7; Defense = 8; XP = 45; Gold = 22; Tier = 3 },
+    
+    # Tier 4: Late-mid game monsters
+    @{ Name = "Lich"; Health = 28; Attack = 10; Defense = 4; XP = 50; Gold = 30; Tier = 4 },
+    @{ Name = "Behemoth"; Health = 45; Attack = 12; Defense = 6; XP = 65; Gold = 40; Tier = 4 },
+    @{ Name = "High Orc"; Health = 59; Attack = 15; Defense = 6; XP = 65; Gold = 20; Tier = 4 },
+    @{ Name = "Orc Priestest"; Health = 120; Attack = 15; Defense = 6; XP = 65; Gold = 40; Tier = 4 },
+    @{ Name = "Lich Wench"; Health = 30; Attack = 10; Defense = 5; XP = 65; Gold = 25; Tier = 4 },
+    
+    # Tier 5: Late game monsters
+    @{ Name = "Chaos Demon"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
+    @{ Name = "Nightmare"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
+    @{ Name = "High Lich Priest"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
+    @{ Name = "Orc Lord"; Health = 50; Attack = 18; Defense = 6; XP = 75; Gold = 50; Tier = 5 }
 )
 
 # Boss Definitions - Need more variant
@@ -536,13 +554,13 @@ function Show-Spells {
 function Get-RandomMonster {
     # Check for boss every 3 floors
     $isBossFloor = $global:CurrentFloor % 3 -eq 0
-    $isBoss = $isBossFloor -and (Get-Random -Maximum 100) -lt 5  # Encounter percentage - Tuned this value to make it fair.
+    $isBoss = $isBossFloor -and (Get-Random -Maximum 100) -lt 3  # Encounter percentage - Tuned this value to make it fair (current 3%).
     
     if ($isBoss) {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
         # Scale boss stats based on player level and stats (balance as needed)
-		$scaleFactor = 1 + ($global:Player.Level * 0.10) + ($global:Player.Attack * 0.20) + ($global:CurrentFloor * 0.1)
+		$scaleFactor = 1 + ($global:Player.Level * 0.10) + ($global:Player.Attack * 0.10) + ($global:CurrentFloor * 0.1) + ($global.Player.Level * 0.2)
 		$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
 		$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
 		$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
@@ -561,22 +579,40 @@ function Get-RandomMonster {
         
         Write-Typewriter "`n*** BOSS ENCOUNTER! ***" -ForegroundColor Red
         return $boss
-    }
-    else {
-        $monsterIndex = [Math]::Min([Math]::Floor(($global:CurrentFloor - 1) / 2), $MonsterTypes.Count - 1)
-        $baseMonster = $MonsterTypes[$monsterIndex].Clone()
-        
-# Scale monster stats calculation based on floor level
-	$scaleFactor = 1 + ($global:CurrentFloor * 0.3)
-	$baseMonster.Health = [Math]::Round($baseMonster.Health * $scaleFactor)
-	$baseMonster.Attack = [Math]::Round($baseMonster.Attack * $scaleFactor)
-	$baseMonster.Defense = [Math]::Round($baseMonster.Defense * $scaleFactor)
-	$baseMonster.XP = [Math]::Round($baseMonster.XP * $scaleFactor)
-	$baseMonster.Gold = [Math]::Round($baseMonster.Gold * $scaleFactor)
-	$baseMonster.CriticalChance = 5  # Monsters have 5% base critical chance
-	$baseMonster.CriticalMultiplier = 1.5  # Monsters do 1.5x critical damage        
-        return $baseMonster
-    }
+    } else {
+	    # Automatic tier-based monster selection
+	    $currentTier = [Math]::Min([Math]::Ceiling($global:CurrentFloor / 3), 5)
+	    
+	    # Get all monsters in the current tier and one tier below (for variety)
+	    $availableTiers = @($currentTier)
+	    if ($currentTier -gt 1) {
+		$availableTiers += ($currentTier - 1)
+	    }
+	    
+	    # Filter monsters by available tiers
+	    $availableMonsters = $MonsterTypes | Where-Object { $_.Tier -in $availableTiers }
+	    
+	    # If we have monsters available, select one randomly
+	    if ($availableMonsters.Count -gt 0) {
+		$selectedMonster = $availableMonsters | Get-Random
+		$baseMonster = $selectedMonster.Clone()
+	    } else {
+		# Fallback: select any monster (shouldn't happen with proper tier setup)
+		$baseMonster = ($MonsterTypes | Get-Random).Clone()
+	    }
+	    
+	    # Scale monster stats based on floor level
+	    $scaleFactor = 1 + ($global:CurrentFloor * 0.15) + ($global:Player.Level * 0.2)
+	    $baseMonster.Health = [Math]::Round($baseMonster.Health * $scaleFactor)
+	    $baseMonster.Attack = [Math]::Round($baseMonster.Attack * $scaleFactor)
+	    $baseMonster.Defense = [Math]::Round($baseMonster.Defense * $scaleFactor)
+	    $baseMonster.XP = [Math]::Round($baseMonster.XP * $scaleFactor)
+	    $baseMonster.Gold = [Math]::Round($baseMonster.Gold * $scaleFactor)
+	    $baseMonster.CriticalChance = 5
+	    $baseMonster.CriticalMultiplier = 1.5
+	    
+	    return $baseMonster
+	}
 }
 
 function Get-RandomArtifact {
