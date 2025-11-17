@@ -211,11 +211,11 @@ $ClassSpells = @{
     )
 }
 
-# Elemental weaknesses/resistances
+# Elemental weaknesses/resistances - 1.x = xx% damage.
 $ElementalEffects = @{
     "Fire" = @{ 
         Description = "burns intensely"; 
-        BonusDamage = 1.2  # 20% bonus damage
+        BonusDamage = 1.2 
     }
     "Ice" = @{ 
         Description = "freezes the target"; 
@@ -263,9 +263,9 @@ $MonsterTypes = @(
     
     # Tier 5: Late game monsters
     @{ Name = "Chaos Demon"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
-    @{ Name = "Nightmare"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
-    @{ Name = "High Lich Priest"; Health = 38; Attack = 14; Defense = 5; XP = 75; Gold = 50; Tier = 5 },
-    @{ Name = "Orc Lord"; Health = 50; Attack = 18; Defense = 6; XP = 75; Gold = 50; Tier = 5 }
+    @{ Name = "Nightmare"; Health = 38; Attack = 16; Defense = 5; XP = 85; Gold = 60; Tier = 5 },
+    @{ Name = "High Lich Priest"; Health = 38; Attack = 12; Defense = 9; XP = 75; Gold = 50; Tier = 5 },
+    @{ Name = "Orc Lord"; Health = 50; Attack = 18; Defense = 6; XP = 75; Gold = 90; Tier = 5 }
 )
 
 # Boss Definitions - Need more variant
@@ -275,7 +275,7 @@ $BossTypes = @(
     @{ Name = "Archlich"; BaseHealth = 40; BaseAttack = 18; BaseDefense = 6; XP = 220; Gold = 90 },
     @{ Name = "Chaos God"; BaseHealth = 55; BaseAttack = 16; BaseDefense = 10; XP = 250; Gold = 150 },
     @{ Name = "Death Eater"; BaseHealth = 50; BaseAttack = 4; BaseDefense = 20; XP = 350; Gold = 150 },
-    @{ Name = "World Eater"; BaseHealth = 70; BaseAttack = 14; BaseDefense = 14; XP = 300; Gold = 200 }
+    @{ Name = "World Eater"; BaseHealth = 70; BaseAttack = 10; BaseDefense = 14; XP = 380; Gold = 200 }
 )
 
 # Add more boss special abilities.
@@ -552,15 +552,26 @@ function Show-Spells {
 }
 
 function Get-RandomMonster {
-    # Check for boss every 3 floors
+    # Boss spawn logic: higher chance on boss floors (every 3 floors), lower chance on other floors
     $isBossFloor = $global:CurrentFloor % 3 -eq 0
-    $isBoss = $isBossFloor -and (Get-Random -Maximum 100) -lt 3  # Encounter percentage - Tuned this value to make it fair (current 3%).
     
+    # Calculate boss chance - higher on boss floors, lower on regular floors
+    if ($isBossFloor) {
+        $bossChance = 30  # 30% chance on boss floors (every 3 floors)
+    } else {
+        # Gradually increasing chance on non-boss floors based on floor level
+        $baseChance = 2   # Base 2% chance
+        $floorBonus = [Math]::Min($global:CurrentFloor * 0.5, 10)  # +0.5% per floor, max +10%
+        $bossChance = $baseChance + $floorBonus
+    }
+    
+    $isBoss = (Get-Random -Maximum 100) -lt $bossChance
+
     if ($isBoss) {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
         # Scale boss stats based on player level and stats (balance as needed)
-		$scaleFactor = 1 + ($global:Player.Level * 0.10) + ($global:Player.Attack * 0.10) + ($global:CurrentFloor * 0.1) + ($global.Player.Level * 0.2)
+		$scaleFactor = 1 + ($global:Player.Level * 0.3) + ($global:Player.Attack * 0.10) + ($global:CurrentFloor * 0.5) + ($global.Player.Level * 0.2) + ($global:Player.Experience * 0.2)
 		$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
 		$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
 		$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
@@ -891,7 +902,7 @@ function Start-Combat {
     
     switch ($monster.SpecialEffect) {
         "lifedrain" {
-            $healAmount = [Math]::Round($baseDamage * 0.3)  # Reduced from 0.5
+            $healAmount = [Math]::Round($baseDamage * 0.25)  # Reduced from 0.5
             $monsterHealth += $healAmount
             $monsterHealth = [Math]::Min($monster.Health, $monsterHealth)
             $effectMessage = " and drains $healAmount health from you!"
@@ -920,17 +931,17 @@ function Start-Combat {
             }
         }
         "sacrifice" {
-            # Boss takes some damage but gains more
-            $bossSelfDamage = [Math]::Round($baseDamage * 0.2)  # Reduced from 0.3
+            # Boss takes some damage but gains more - subject to rebalancing.
+            $bossSelfDamage = [Math]::Round($baseDamage * 0.5)
             $monsterHealth -= $bossSelfDamage
-            $healAmount = [Math]::Round($baseDamage * 0.5)  # Reduced from 0.8
+            $healAmount = [Math]::Round($baseDamage * 0.3)
             $monsterHealth += $healAmount
             $monsterHealth = [Math]::Min($monster.Health, $monsterHealth)
             $effectMessage = " sacrificing $bossSelfDamage health but gaining $healAmount!"
         }
         "armorbreak" {
             # Reduce player defense
-            $defenseReduction = 1  # Reduced from 2
+            $defenseReduction = 2  # Reduced from 2
             $global:Player.Defense = [Math]::Max(0, $global:Player.Defense - $defenseReduction)
             $effectMessage = " breaking your armor and reducing defense by $defenseReduction!"
         }
@@ -1020,7 +1031,7 @@ function Start-Combat {
 
 			Write-Host "Earned $xpEarned XP and $goldEarned gold!" -ForegroundColor Yellow
 
-# Check for level up after combat victory
+			# Check for level up after combat victory
 			Level-Up
 
 			Write-Host "Press any key to continue..." -ForegroundColor Gray
@@ -1041,8 +1052,8 @@ function Start-Combat {
 		$global:Player.Defense = $ClassDefinitions[$global:Player.Class].Defense + ($global:Player.Level * 1)
 		if ($global:Player.Ascension) {
 		    $global:Player.Defense += $AscensionBonuses[$global:Player.Ascension].Defense
+			}
 		}
-	}
 		# Check for artifact drops
 		if ($victory) {
 		    # Check for low tier artifact from normal monsters (2% chance)
@@ -1423,12 +1434,35 @@ function Start-Game {
 	    '6' {
 	    	Show-Artifacts
 	    }
-            '7' {
-                $global:CurrentFloor++
-                Write-Host "You descend to floor $global:CurrentFloor..." -ForegroundColor Cyan
-                Write-Host "Monsters grow stronger!" -ForegroundColor Yellow
-            }
-            '0' {
+	    '7' {
+		$global:CurrentFloor++
+		Write-Host "You descend to floor $global:CurrentFloor..." -ForegroundColor Cyan
+		    
+		$isBossFloor = $global:CurrentFloor % 3 -eq 0
+		    
+		if ($isBossFloor) {
+			$bossMessages = @(
+			    "A terrifying roar echoes through the chamber... A boss awaits!",
+			    "The very air crackles with power... A formidable foe is near!",
+			    "You sense a massive presence watching you... Prepare for battle!",
+			    "Ancient runes glow ominously... This floor holds a great challenge!"
+			)
+			$randomMessage = $bossMessages | Get-Random
+			Write-Typewriter $randomMessage -Color Red -Delay 40
+			Write-Host "Boss encounter likely!" -ForegroundColor Yellow
+		    } else {
+			$normalMessages = @(
+			    "Monsters grow stronger as you descend deeper.",
+			    "The dungeon's challenges intensify.",
+			    "You venture further into the unknown.",
+			    "Deeper you go, where greater dangers await.",
+			    "Each floor brings new threats and treasures."
+			)
+			$randomMessage = $normalMessages | Get-Random
+			Write-Typewriter $randomMessage -Color Cyan -Delay 30
+		    }
+		}
+		'0' {
 		$continuePlaying = Show-ExitScreen
 		if (!$continuePlaying) {
 			$global:GameRunning = $false
