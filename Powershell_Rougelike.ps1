@@ -38,6 +38,8 @@ function Write-Quick {
     Write-Host "" #page break
 }
 
+#SECTION -- Main Game function
+
 function Show-WelcomeScreen {
     Clear-Host
     Write-Host "==========================================" -ForegroundColor Cyan
@@ -123,7 +125,7 @@ $AscensionBonuses = @{
     Saint = @{ Health = 25; Mana = 18; Attack = 2; Defense = 7; Speed = 1 }
 }
 
-# Spell Definitions
+
 # Spell Definitions (simplified without script blocks)
 $ClassSpells = @{
     "Mage" = @(
@@ -336,35 +338,37 @@ $global:MaxArtifacts = 5  # Maximum artifacts player can carry
 
 # Low Tier Artifacts - dropped from normal monsters (low chance)
 $LowTierArtifacts = @(
-    @{ Name = "Rusty Amulet"; Description = "An old, tarnished amulet"; Stats = @{ Health = 5; Attack = 1 } },
+    @{ Name = "Rusty Amulet"; Description = "An old, tarnished amulet"; Stats = @{ Health = 10; Attack = 1 } },
     @{ Name = "Cracked Ring"; Description = "A ring with a hairline fracture"; Stats = @{ Defense = 2; Mana = 3 } },
-    @{ Name = "Faded Cloak"; Description = "A cloak that has seen better days"; Stats = @{ Speed = 1; Health = 3 } },
-    @{ Name = "Chipped Blade"; Description = "A blade with several notches"; Stats = @{ Attack = 2; CriticalChance = 2 } },
-    @{ Name = "Weathered Shield"; Description = "A shield bearing many scars"; Stats = @{ Defense = 3; Health = 2 } },
+    @{ Name = "Faded Cloak"; Description = "A cloak that has seen better days"; Stats = @{ Speed = 2; Health = 5 } },
+    @{ Name = "Tarnished Dagger"; Description = "A dull blade once of the damn"; Stats = @{ Attack = 8; CriticalChance = 5; CriticalMultiplier = 0.4 } },
+    @{ Name = "Cracked Orb of Health"; Description = "Once used to give vitality, cracked beyond salvation"; Stats = @{ Defense = 2; Health = 10 } },
+    @{ Name = "Chipped Blade"; Description = "A blade with several notches"; Stats = @{ Attack = 8; CriticalChance = 2 } },
+    @{ Name = "Weathered Shield"; Description = "A shield bearing many scars"; Stats = @{ Defense = 6; Health = 2 } },
     @{ Name = "Dull Crystal"; Description = "A crystal that barely glows"; Stats = @{ Mana = 5; CriticalMultiplier = 0.1 } },
-    @{ Name = "Ancient Bone"; Description = "A bone inscribed with faint runes"; Stats = @{ Attack = 1; Defense = 1; Health = 2 } },
+    @{ Name = "Ancient Bone"; Description = "A bone inscribed with faint runes"; Stats = @{ Attack = 2; Defense = 1; Health = 2 } },
     @{ Name = "Tarnished Locket"; Description = "A locket that holds a faded picture"; Stats = @{ Health = 4; Mana = 2; Speed = 1 } },
     @{ Name = "Fractured Orb"; Description = "An orb that hums with weak energy"; Stats = @{ Mana = 4; CriticalChance = 1 } },
-    @{ Name = "Worn Bracers"; Description = "Bracers that fit perfectly"; Stats = @{ Defense = 2; Speed = 1; Attack = 1 } }
+    @{ Name = "Worn Bracers"; Description = "Bracers that fit perfectly"; Stats = @{ Defense = 3; Speed = 2; Attack = 1 } }
 )
 
 # High Tier Artifacts - dropped from bosses (even lower chance)
 $HighTierArtifacts = @(
-    @{ Name = "Amulet of the Void"; Description = "An amulet that drinks the light around it"; Stats = @{ Health = 15; Attack = 3; CriticalChance = 5 } },
-    @{ Name = "Ring of Eternal Night"; Description = "A ring that feels unnaturally cold"; Stats = @{ Defense = 5; Mana = 10; CriticalMultiplier = 0.5 } },
-    @{ Name = "Cloak of Shadows"; Description = "A cloak that seems to blend with darkness"; Stats = @{ Speed = 3; Health = 10; CriticalChance = 3 } },
-    @{ Name = "Blade of the Abyss"; Description = "A blade that whispers promises of power"; Stats = @{ Attack = 5; CriticalChance = 7; CriticalMultiplier = 0.3 } },
-    @{ Name = "Shield of the Titan"; Description = "A shield that feels impossibly heavy"; Stats = @{ Defense = 8; Health = 12; Speed = -1 } },
-    @{ Name = "Crystal of Infinite Potential"; Description = "A crystal that contains swirling galaxies"; Stats = @{ Mana = 15; CriticalMultiplier = 0.7; Attack = 2 } },
-    @{ Name = "Bone of the First Lich"; Description = "A bone that pulses with necrotic energy"; Stats = @{ Attack = 4; Defense = 3; Health = 8; Mana = 5 } },
-    @{ Name = "Locket of Lost Souls"; Description = "A locket that occasionally whispers"; Stats = @{ Health = 12; Mana = 8; Speed = 2; CriticalChance = 2 } },
-    @{ Name = "Orb of Cosmic Truth"; Description = "An orb that shows impossible geometries"; Stats = @{ Mana = 12; CriticalChance = 4; CriticalMultiplier = 0.4; Defense = 2 } },
-    @{ Name = "Bracers of Divine Wrath"; Description = "Bracers that glow with holy fire"; Stats = @{ Defense = 4; Speed = 2; Attack = 3; CriticalChance = 3 } },
-    @{ Name = "Crown of the Fallen King"; Description = "A crown that weighs heavy with regret"; Stats = @{ Health = 20; Mana = 10; Attack = 2; Defense = 2 } },
-    @{ Name = "Scepter of Unmaking"; Description = "A scepter that warps reality around it"; Stats = @{ Attack = 6; CriticalMultiplier = 0.6; Mana = 8; Speed = 1 } }
+    @{ Name = "Amulet of the Void"; Description = "An amulet that drinks the light around it"; Stats = @{ Health = 35; Attack = 3; CriticalChance = 5 } },
+    @{ Name = "Ring of Eternal Night"; Description = "A ring that feels unnaturally cold"; Stats = @{ Defense = 5; Mana = 25; CriticalMultiplier = 1 } },
+    @{ Name = "Cloak of Shadows"; Description = "A cloak that seems to blend with darkness"; Stats = @{ Speed = 10; Health = 45; CriticalChance = 10 } },
+    @{ Name = "Blade of the Abyss"; Description = "A blade that whispers promises of power"; Stats = @{ Attack = 25; CriticalChance = 7; CriticalMultiplier = 0.3 } },
+    @{ Name = "Shield of the Titan"; Description = "A shield that feels impossibly heavy"; Stats = @{ Defense = 30; Health = 20; Speed = -5 } },
+    @{ Name = "Crystal of Infinite Potential"; Description = "A crystal that contains swirling galaxies"; Stats = @{ Mana = 55; CriticalMultiplier = 0.7; Attack = 2 } },
+    @{ Name = "Bone of the First Lich"; Description = "A bone that pulses with necrotic energy"; Stats = @{ Attack = 20; Defense = -15; Health = 85; Mana = 35 } },
+    @{ Name = "Locket of Lost Souls"; Description = "A locket that occasionally whispers"; Stats = @{ Health = 42; Mana = 28; Speed = 2; CriticalChance = 2 } },
+    @{ Name = "Orb of Cosmic Truth"; Description = "An orb that shows impossible geometries"; Stats = @{ Mana = 32; CriticalChance = 4; CriticalMultiplier = 0.4; Defense = 2 } },
+    @{ Name = "Bracers of Divine Wrath"; Description = "Bracers that glow with holy fire"; Stats = @{ Defense = 14; Speed = 3; Attack = 23; CriticalChance = 3 } },
+    @{ Name = "Crown of the Fallen King"; Description = "A crown that weighs heavy with regret"; Stats = @{ Health = 80; Mana = 30; Attack = 22; Defense = 12 } },
+    @{ Name = "Scepter of Unmaking"; Description = "A scepter that warps reality around it"; Stats = @{ Attack = 40; CriticalMultiplier = 1; Mana = 8; Speed = -5 } }
 )
 
-#Main game function goes here
+#Main game function here
 
 function Show-Title {
     Clear-Host
@@ -1341,49 +1345,60 @@ function Visit-Shop {
                 Write-Host "Critical multiplier increased by 0.5! Current: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
             }
 	    '8' {
-		if ($global:PlayerArtifacts.Count -eq 0) {
-		    Write-Host "You have no artifacts to sell!" -ForegroundColor Red
-		    return
-		}
-		
-		Write-Host "`nSelect artifact to sell:" -ForegroundColor Yellow
-		for ($i = 0; $i -lt $global:PlayerArtifacts.Count; $i++) {
-		    $artifact = $global:PlayerArtifacts[$i]
-		    Write-Host "$($i + 1). $($artifact.Name) - $($artifact.Description)" -ForegroundColor White
-		}
-		Write-Host "0. Cancel" -ForegroundColor Gray
-		
-		$sellChoice = Read-Host "`nSelect artifact"
-		if ($sellChoice -eq '0') { return }
-		
-		$artifactIndex = [int]$sellChoice - 1
-		if ($artifactIndex -ge 0 -and $artifactIndex -lt $global:PlayerArtifacts.Count) {
-		    $soldArtifact = $global:PlayerArtifacts[$artifactIndex]
-		    
-		    # Remove artifact bonuses
-		    foreach ($stat in $soldArtifact.Stats.Keys) {
-			switch ($stat) {
-			    "Health" { 
-				$global:Player.MaxHealth -= $soldArtifact.Stats[$stat]
-				$global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
-			    }
-			    "Mana" { 
-				$global:Player.MaxMana -= $soldArtifact.Stats[$stat]
-				$global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
-			    }
-			    "Attack" { $global:Player.Attack -= $soldArtifact.Stats[$stat] }
-			    "Defense" { $global:Player.Defense -= $soldArtifact.Stats[$stat] }
-			    "Speed" { $global:Player.Speed -= $soldArtifact.Stats[$stat] }
-			    "CriticalChance" { $global:Player.CriticalChance -= $soldArtifact.Stats[$stat] }
-			    "CriticalMultiplier" { $global:Player.CriticalMultiplier -= $soldArtifact.Stats[$stat] }
-			}
+		    if ($global:PlayerArtifacts.Count -eq 0) {
+			Write-Host "You have no artifacts to sell!" -ForegroundColor Red
+			return
 		    }
 		    
-		    $global:PlayerArtifacts.RemoveAt($artifactIndex)
-		    $global:Player.Gold += 50
-		    Write-Host "Sold $($soldArtifact.Name) for 50 gold!" -ForegroundColor Yellow
+		    Write-Host "`nSelect artifact to sell:" -ForegroundColor Yellow
+		    for ($i = 0; $i -lt $global:PlayerArtifacts.Count; $i++) {
+			$artifact = $global:PlayerArtifacts[$i]
+			$tierColor = if ($artifact.Tier -eq "High") { "Magenta" } else { "Yellow" }
+			Write-Host "$($i + 1). $($artifact.Name) [$($artifact.Tier) Tier] - $($artifact.Description)" -ForegroundColor $tierColor
+		    }
+		    Write-Host "0. Cancel" -ForegroundColor Gray
+		    
+		    do {
+			$sellChoice = Read-Host "`nSelect artifact"
+		    } while ($sellChoice -notin @('0') -and ($sellChoice -notmatch '^\d+$' -or [int]$sellChoice -lt 1 -or [int]$sellChoice -gt $global:PlayerArtifacts.Count))
+		    
+		    if ($sellChoice -eq '0') { return }
+		    
+		    $artifactIndex = [int]$sellChoice - 1
+		    if ($artifactIndex -ge 0 -and $artifactIndex -lt $global:PlayerArtifacts.Count) {
+			$soldArtifact = $global:PlayerArtifacts[$artifactIndex]
+			
+			# Calculate sell value based on tier
+			$sellValue = if ($soldArtifact.Tier -eq "High") { 100 } else { 50 }
+			
+			# Remove artifact bonuses
+			foreach ($stat in $soldArtifact.Stats.Keys) {
+			    switch ($stat) {
+				"Health" { 
+				    $global:Player.MaxHealth -= $soldArtifact.Stats[$stat]
+				    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
+				}
+				"Mana" { 
+				    $global:Player.MaxMana -= $soldArtifact.Stats[$stat]
+				    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
+				}
+				"Attack" { $global:Player.Attack -= $soldArtifact.Stats[$stat] }
+				"Defense" { $global:Player.Defense -= $soldArtifact.Stats[$stat] }
+				"Speed" { $global:Player.Speed -= $soldArtifact.Stats[$stat] }
+				"CriticalChance" { $global:Player.CriticalChance -= $soldArtifact.Stats[$stat] }
+				"CriticalMultiplier" { $global:Player.CriticalMultiplier -= $soldArtifact.Stats[$stat] }
+			    }
+			}
+			
+			# Remove artifact from array (FIXED: Use array filtering instead of RemoveAt)
+			$global:PlayerArtifacts = @($global:PlayerArtifacts | Where-Object { $global:PlayerArtifacts.IndexOf($_) -ne $artifactIndex })
+			
+			$global:Player.Gold += $sellValue
+			Write-Host "Sold $($soldArtifact.Name) for $sellValue gold!" -ForegroundColor Yellow
+			Write-Host "Artifact bonuses have been removed." -ForegroundColor Gray
+		    }
 		}
-	    }
+	
         }
     } else {
         Write-Host "Not enough gold!" -ForegroundColor Red
