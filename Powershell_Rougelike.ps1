@@ -2,6 +2,7 @@
 
 # Game State Variables goes here. 
 $global:Player = $null
+$global:PlayerBaseStats = $null
 $global:GameRunning = $true
 $global:CurrentFloor = 1
 $global:MonstersDefeated = 0
@@ -332,6 +333,67 @@ $BossAbilities = @(
     }
 )
 
+# Equipment System
+$global:PlayerEquipment = @{
+    Head = $null
+    Body = $null  
+    Legs = $null
+    LeftHand = $null
+    RightHand = $null
+    Cloak = $null
+    Accessory1 = $null
+    Accessory2 = $null
+}
+
+# Equipment Definitions - The shop inventory listing will automatically use this array
+$ShopEquipment = @(
+    # Head Equipment
+    @{ Name = "Leather Cap"; Slot = "Head"; Cost = 30; Stats = @{ Defense = 2; Health = 5 }; Description = "Basic head protection" },
+    @{ Name = "Iron Helmet"; Slot = "Head"; Cost = 75; Stats = @{ Defense = 4; Health = 8 }; Description = "Sturdy metal helmet" },
+    @{ Name = "Mage's Circlet"; Slot = "Head"; Cost = 60; Stats = @{ Mana = 10; CriticalChance = 2 }; Description = "Enhances magical abilities" },
+    @{ Name = "Crown of Wisdom"; Slot = "Head"; Cost = 150; Stats = @{ Mana = 15; Health = 10; CriticalChance = 3 }; Description = "Royal headpiece that boosts intellect" },
+
+    # Body Equipment
+    @{ Name = "Leather Armor"; Slot = "Body"; Cost = 50; Stats = @{ Defense = 3; Health = 10 }; Description = "Basic body protection" },
+    @{ Name = "Chainmail"; Slot = "Body"; Cost = 120; Stats = @{ Defense = 6; Health = 15; Speed = -1 }; Description = "Heavy but protective" },
+    @{ Name = "Robe of the Magi"; Slot = "Body"; Cost = 100; Stats = @{ Mana = 12; Defense = 2 }; Description = "Magically enhanced robes" },
+    @{ Name = "Dragon Scale Armor"; Slot = "Body"; Cost = 300; Stats = @{ Defense = 10; Health = 25; Attack = 3 }; Description = "Crafted from ancient dragon scales" },
+
+    # Legs Equipment
+    @{ Name = "Leather Pants"; Slot = "Legs"; Cost = 25; Stats = @{ Defense = 1; Speed = 1 }; Description = "Light and flexible" },
+    @{ Name = "Plate Leggings"; Slot = "Legs"; Cost = 80; Stats = @{ Defense = 4; Health = 5; Speed = -1 }; Description = "Heavy leg protection" },
+    @{ Name = "Silk Trousers"; Slot = "Legs"; Cost = 45; Stats = @{ Mana = 5; Speed = 2 }; Description = "Enchanted fabric" },
+    @{ Name = "Boots of Swiftness"; Slot = "Legs"; Cost = 120; Stats = @{ Speed = 4; Defense = 2 }; Description = "Magically enhanced for speed" },
+
+    # Left Hand Equipment
+    @{ Name = "Wooden Shield"; Slot = "LeftHand"; Cost = 40; Stats = @{ Defense = 3 }; Description = "Basic defensive shield" },
+    @{ Name = "Tower Shield"; Slot = "LeftHand"; Cost = 100; Stats = @{ Defense = 7; Speed = -2 }; Description = "Massive defensive shield" },
+    @{ Name = "Magic Focus"; Slot = "LeftHand"; Cost = 90; Stats = @{ Mana = 8; CriticalMultiplier = 0.2 }; Description = "Channel magical energy" },
+    @{ Name = "Dragonbone Shield"; Slot = "LeftHand"; Cost = 250; Stats = @{ Defense = 9; Health = 10; CriticalChance = 2 }; Description = "Shield made from dragon bones" },
+
+    # Right Hand Equipment
+    @{ Name = "Iron Sword"; Slot = "RightHand"; Cost = 60; Stats = @{ Attack = 4 }; Description = "Standard combat sword" },
+    @{ Name = "Great Axe"; Slot = "RightHand"; Cost = 130; Stats = @{ Attack = 8; Speed = -1 }; Description = "Heavy two-handed weapon" },
+    @{ Name = "Enchanted Staff"; Slot = "RightHand"; Cost = 110; Stats = @{ Attack = 3; Mana = 12; CriticalChance = 3 }; Description = "Magical staff for spellcasters" },
+    @{ Name = "Blade of the Void"; Slot = "RightHand"; Cost = 400; Stats = @{ Attack = 12; CriticalChance = 5; CriticalMultiplier = 0.4 }; Description = "Weapon that cuts through reality" },
+
+    # Cloak Equipment
+    @{ Name = "Traveler's Cloak"; Slot = "Cloak"; Cost = 35; Stats = @{ Speed = 1; Defense = 1 }; Description = "Light cloak for journeys" },
+    @{ Name = "Shadow Cloak"; Slot = "Cloak"; Cost = 95; Stats = @{ Speed = 3; CriticalChance = 2 }; Description = "Blends with shadows" },
+    @{ Name = "Mage's Cloak"; Slot = "Cloak"; Cost = 85; Stats = @{ Mana = 8; Defense = 2 }; Description = "Enchanted with protective magic" },
+    @{ Name = "Cloak of Invisibility"; Slot = "Cloak"; Cost = 280; Stats = @{ Speed = 5; CriticalChance = 4; Defense = 3 }; Description = "Renders the wearer nearly invisible" },
+
+    # Accessories
+    @{ Name = "Silver Ring"; Slot = "Accessory1"; Cost = 45; Stats = @{ Mana = 3; CriticalChance = 1 }; Description = "Simple magical ring" },
+    @{ Name = "Warrior's Bracer"; Slot = "Accessory1"; Cost = 55; Stats = @{ Attack = 2; Health = 5 }; Description = "Reinforced combat bracer" },
+    @{ Name = "Amulet of Health"; Slot = "Accessory1"; Cost = 70; Stats = @{ Health = 15 }; Description = "Boosts vitality" },
+    @{ Name = "Ring of Power"; Slot = "Accessory1"; Cost = 200; Stats = @{ Attack = 5; Mana = 8; CriticalChance = 3 }; Description = "Ancient ring of immense power" },
+    @{ Name = "Necklace of the Sage"; Slot = "Accessory2"; Cost = 65; Stats = @{ Mana = 10; CriticalMultiplier = 0.2 }; Description = "Enhances magical prowess" },
+    @{ Name = "Belt of Giant Strength"; Slot = "Accessory2"; Cost = 80; Stats = @{ Attack = 4; Health = 8 }; Description = "Grants the wearer enhanced strength" },
+    @{ Name = "Earring of Precision"; Slot = "Accessory2"; Cost = 60; Stats = @{ CriticalChance = 4; Speed = 1 }; Description = "Improves accuracy and reflexes" },
+    @{ Name = "Orb of Eternal Wisdom"; Slot = "Accessory2"; Cost = 220; Stats = @{ Mana = 15; CriticalMultiplier = 0.5; Health = 10 }; Description = "Contains infinite knowledge" }
+)
+
 # Artifact System
 $global:PlayerArtifacts = @()
 $global:MaxArtifacts = 5  # Maximum artifacts player can carry
@@ -400,25 +462,49 @@ function New-Player {
     $classes = @($ClassDefinitions.Keys)
     $selectedClass = $classes[[int]$choice - 1]
     $global:PlayerArtifacts = @()
-   $global:Player = @{
-    Name = $name
-    Class = $selectedClass
-    Level = 1
-    Experience = 0
-    ExperienceToNextLevel = 100
-    Health = $ClassDefinitions[$selectedClass].Health
-    MaxHealth = $ClassDefinitions[$selectedClass].Health
-    Mana = $ClassDefinitions[$selectedClass].Mana
-    MaxMana = $ClassDefinitions[$selectedClass].Mana
-    Attack = $ClassDefinitions[$selectedClass].Attack
-    Defense = $ClassDefinitions[$selectedClass].Defense
-    Speed = $ClassDefinitions[$selectedClass].Speed
-    Gold = 50
-    Ascension = $null
-    AscensionsAvailable = $ClassDefinitions[$selectedClass].Ascensions
-    CriticalChance = 10  # Base 10% critical chance
-    CriticalMultiplier = 2.0  # 2x damage for critical hits
-} 
+    $global:Player = @{
+        Name = $name
+        Class = $selectedClass
+        Level = 1
+        Experience = 0
+        ExperienceToNextLevel = 100
+        Health = $ClassDefinitions[$selectedClass].Health
+        MaxHealth = $ClassDefinitions[$selectedClass].Health
+        Mana = $ClassDefinitions[$selectedClass].Mana
+        MaxMana = $ClassDefinitions[$selectedClass].Mana
+        Attack = $ClassDefinitions[$selectedClass].Attack
+        Defense = $ClassDefinitions[$selectedClass].Defense
+        Speed = $ClassDefinitions[$selectedClass].Speed
+        Gold = 50
+        Ascension = $null
+        AscensionsAvailable = $ClassDefinitions[$selectedClass].Ascensions
+        CriticalChance = 10
+        CriticalMultiplier = 2.0
+    }
+    
+    # Store base stats separately
+    $global:PlayerBaseStats = @{
+        MaxHealth = $global:Player.MaxHealth
+        MaxMana = $global:Player.MaxMana
+        Attack = $global:Player.Attack
+        Defense = $global:Player.Defense
+        Speed = $global:Player.Speed
+        CriticalChance = $global:Player.CriticalChance
+        CriticalMultiplier = $global:Player.CriticalMultiplier
+    }
+    
+    # Initialize equipment
+    $global:PlayerEquipment = @{
+        Head = $null
+        Body = $null  
+        Legs = $null
+        LeftHand = $null
+        RightHand = $null
+        Cloak = $null
+        Accessory1 = $null
+        Accessory2 = $null
+    }    
+    Apply-EquipmentStats
     Write-Host "`nCharacter created successfully!" -ForegroundColor Green
     
     Write-Typewriter "You made your way out, a town, underground, you heard a calling," -Color Yellow -Delay 30
@@ -516,6 +602,16 @@ function Initialize-GameState {
     $global:MonstersDefeated = 0
     $global:BossesDefeated = 0
     $global:PlayerArtifacts = @()
+    $global:PlayerEquipment = @{
+        Head = $null
+        Body = $null  
+        Legs = $null
+        LeftHand = $null
+        RightHand = $null
+        Cloak = $null
+        Accessory1 = $null
+        Accessory2 = $null
+    }
 }
 
 function Show-Spells {
@@ -553,6 +649,232 @@ function Show-Spells {
         }
         Write-Host ""
     }
+}
+
+function Show-Equipment {
+    Write-Host "`n=== YOUR EQUIPMENT ===" -ForegroundColor Cyan
+    
+    $slots = @(
+        @{Name = "Head"; Display = "👑 Head"},
+        @{Name = "Body"; Display = "🛡️ Body"},
+        @{Name = "Legs"; Display = "👖 Legs"},
+        @{Name = "LeftHand"; Display = "🛡️ Left Hand"},
+        @{Name = "RightHand"; Display = "⚔️ Right Hand"},
+        @{Name = "Cloak"; Display = "🧥 Cloak"},
+        @{Name = "Accessory1"; Display = "💍 Accessory 1"},
+        @{Name = "Accessory2"; Display = "💎 Accessory 2"}
+    )
+    
+    $totalBonuses = @{}
+    $hasEquipment = $false
+    
+    foreach ($slot in $slots) {
+        $slotName = $slot.Name
+        $equipment = $global:PlayerEquipment[$slotName]
+        
+        if ($equipment) {
+            $hasEquipment = $true
+            Write-Host "`n$($slot.Display): $($equipment.Name)" -ForegroundColor Green
+            Write-Host "   $($equipment.Description)" -ForegroundColor Gray
+            
+            # Show equipment stats
+            foreach ($stat in $equipment.Stats.Keys) {
+                $value = $equipment.Stats[$stat]
+                $color = if ($value -gt 0) { "Green" } else { "Red" }
+                $symbol = if ($value -gt 0) { "+" } else { "" }
+                
+                switch ($stat) {
+                    "Health" { 
+                        Write-Host "   $symbol$value Health" -ForegroundColor $color
+                        if ($totalBonuses.ContainsKey("Health")) {
+                            $totalBonuses["Health"] += $value
+                        } else {
+                            $totalBonuses["Health"] = $value
+                        }
+                    }
+                    "Mana" { 
+                        Write-Host "   $symbol$value Mana" -ForegroundColor $color
+                        if ($totalBonuses.ContainsKey("Mana")) {
+                            $totalBonuses["Mana"] += $value
+                        } else {
+                            $totalBonuses["Mana"] = $value
+                        }
+                    }
+                    "Attack" { 
+                        Write-Host "   $symbol$value Attack" -ForegroundColor $color
+                        if ($totalBonuses.ContainsKey("Attack")) {
+                            $totalBonuses["Attack"] += $value
+                        } else {
+                            $totalBonuses["Attack"] = $value
+                        }
+                    }
+                    "Defense" { 
+                        Write-Host "   $symbol$value Defense" -ForegroundColor $color
+                        if ($totalBonuses.ContainsKey("Defense")) {
+                            $totalBonuses["Defense"] += $value
+                        } else {
+                            $totalBonuses["Defense"] = $value
+                        }
+                    }
+                    "Speed" { 
+                        Write-Host "   $symbol$value Speed" -ForegroundColor $color
+                        if ($totalBonuses.ContainsKey("Speed")) {
+                            $totalBonuses["Speed"] += $value
+                        } else {
+                            $totalBonuses["Speed"] = $value
+                        }
+                    }
+                    "CriticalChance" { 
+                        Write-Host "   $symbol$value% Critical Chance" -ForegroundColor $color
+                        if ($totalBonuses.ContainsKey("CriticalChance")) {
+                            $totalBonuses["CriticalChance"] += $value
+                        } else {
+                            $totalBonuses["CriticalChance"] = $value
+                        }
+                    }
+                    "CriticalMultiplier" { 
+                        Write-Host "   $symbol$value Critical Multiplier" -ForegroundColor $color
+                        if ($totalBonuses.ContainsKey("CriticalMultiplier")) {
+                            $totalBonuses["CriticalMultiplier"] += $value
+                        } else {
+                            $totalBonuses["CriticalMultiplier"] = $value
+                        }
+                    }
+                }
+            }
+        } else {
+            Write-Host "`n$($slot.Display): [Empty]" -ForegroundColor DarkGray
+        }
+    }
+    
+    if (-not $hasEquipment) {
+        Write-Host "`nYou have no equipment equipped." -ForegroundColor Yellow
+        Write-Host "Visit the shop to purchase equipment!" -ForegroundColor Gray
+    }
+    
+    # Show total equipment bonuses
+    if ($totalBonuses.Count -gt 0) {
+        Write-Host "`n=== TOTAL EQUIPMENT BONUSES ===" -ForegroundColor Cyan
+        foreach ($stat in $totalBonuses.Keys) {
+            $value = $totalBonuses[$stat]
+            $color = if ($value -gt 0) { "Green" } else { "Red" }
+            $symbol = if ($value -gt 0) { "+" } else { "" }
+            
+            switch ($stat) {
+                "Health" { Write-Host "$symbol$value Health" -ForegroundColor $color }
+                "Mana" { Write-Host "$symbol$value Mana" -ForegroundColor $color }
+                "Attack" { Write-Host "$symbol$value Attack" -ForegroundColor $color }
+                "Defense" { Write-Host "$symbol$value Defense" -ForegroundColor $color }
+                "Speed" { Write-Host "$symbol$value Speed" -ForegroundColor $color }
+                "CriticalChance" { Write-Host "$symbol$value% Critical Chance" -ForegroundColor $color }
+                "CriticalMultiplier" { Write-Host "$symbol$value Critical Multiplier" -ForegroundColor $color }
+            }
+        }
+    }
+    
+    Write-Host "`nPress any key to continue..." -ForegroundColor Gray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
+function Apply-EquipmentStats {
+    # First, remove all equipment bonuses to avoid double counting
+    Remove-EquipmentStats
+    
+    # Apply stats from all equipped items
+    foreach ($slot in $global:PlayerEquipment.Keys) {
+        $equipment = $global:PlayerEquipment[$slot]
+        if ($equipment) {
+            foreach ($stat in $equipment.Stats.Keys) {
+                $value = $equipment.Stats[$stat]
+                switch ($stat) {
+                    "Health" { 
+                        $global:Player.MaxHealth += $value
+                        # Only add to current health if it would exceed max (like healing)
+                        if ($global:Player.Health -eq $global:Player.MaxHealth - $value) {
+                            $global:Player.Health += $value
+                        }
+                    }
+                    "Mana" { 
+                        $global:Player.MaxMana += $value
+                        # Only add to current mana if it would exceed max
+                        if ($global:Player.Mana -eq $global:Player.MaxMana - $value) {
+                            $global:Player.Mana += $value
+                        }
+                    }
+                    "Attack" { $global:Player.Attack += $value }
+                    "Defense" { $global:Player.Defense += $value }
+                    "Speed" { $global:Player.Speed += $value }
+                    "CriticalChance" { $global:Player.CriticalChance += $value }
+                    "CriticalMultiplier" { $global:Player.CriticalMultiplier += $value }
+                }
+            }
+        }
+    }
+    
+    # Ensure health and mana don't exceed their new maximums
+    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
+    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
+}
+
+function Remove-EquipmentStats {
+    # Reset player stats to base values
+    $global:Player.MaxHealth = $global:PlayerBaseStats.MaxHealth
+    $global:Player.MaxMana = $global:PlayerBaseStats.MaxMana
+    $global:Player.Attack = $global:PlayerBaseStats.Attack
+    $global:Player.Defense = $global:PlayerBaseStats.Defense
+    $global:Player.Speed = $global:PlayerBaseStats.Speed
+    $global:Player.CriticalChance = $global:PlayerBaseStats.CriticalChance
+    $global:Player.CriticalMultiplier = $global:PlayerBaseStats.CriticalMultiplier
+    
+    # Ensure health/mana don't exceed new maximums
+    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
+    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
+}
+
+function Apply-EquipmentStats {
+    # First remove all equipment bonuses
+    Remove-EquipmentStats
+    
+    # Then apply equipment bonuses on top of base stats
+    foreach ($slot in $global:PlayerEquipment.Keys) {
+        $equipment = $global:PlayerEquipment[$slot]
+        if ($equipment) {
+            foreach ($stat in $equipment.Stats.Keys) {
+                $value = $equipment.Stats[$stat]
+                switch ($stat) {
+                    "Health" { 
+                        $global:Player.MaxHealth += $value
+                        # Only add to current health if it would exceed max (like healing)
+                        if ($global:Player.Health -eq ($global:Player.MaxHealth - $value)) {
+                            $global:Player.Health += $value
+                        }
+                    }
+                    "Mana" { 
+                        $global:Player.MaxMana += $value
+                        # Only add to current mana if it would exceed max
+                        if ($global:Player.Mana -eq ($global:Player.MaxMana - $value)) {
+                            $global:Player.Mana += $value
+                        }
+                    }
+                    "Attack" { $global:Player.Attack += $value }
+                    "Defense" { $global:Player.Defense += $value }
+                    "Speed" { $global:Player.Speed += $value }
+                    "CriticalChance" { $global:Player.CriticalChance += $value }
+                    "CriticalMultiplier" { $global:Player.CriticalMultiplier += $value }
+                }
+            }
+        }
+    }
+    
+    # Ensure health and mana don't exceed their new maximums
+    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
+    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
+}
+
+function Get-AvailableEquipmentForSlot {
+    param([string]$Slot)
+    
+    return $ShopEquipment | Where-Object { $_.Slot -eq $Slot }
 }
 
 function Get-RandomMonster {
@@ -1173,27 +1495,37 @@ function Level-Up {
         $defenseIncrease = 1 + (Get-Random -Minimum 0 -Maximum 2)
         $manaIncrease = 5 + (Get-Random -Minimum 2 -Maximum 5)
         
-        $global:Player.MaxHealth += $healthIncrease
+        # Update base stats
+        $global:PlayerBaseStats.MaxHealth += $healthIncrease
+        $global:PlayerBaseStats.MaxMana += $manaIncrease
+        $global:PlayerBaseStats.Attack += $attackIncrease
+        $global:PlayerBaseStats.Defense += $defenseIncrease
+        
+        # Apply level up to current stats (equipment will be reapplied later)
+        $global:Player.MaxHealth = $global:PlayerBaseStats.MaxHealth
+        $global:Player.MaxMana = $global:PlayerBaseStats.MaxMana
+        $global:Player.Attack = $global:PlayerBaseStats.Attack
+        $global:Player.Defense = $global:PlayerBaseStats.Defense
+        
         $global:Player.Health = $global:Player.MaxHealth
-        $global:Player.Attack += $attackIncrease
-        $global:Player.Defense += $defenseIncrease
-        $global:Player.MaxMana += $manaIncrease
         $global:Player.Mana = $global:Player.MaxMana
-        if ((Get-Random -Maximum 100) -lt 30) {  # 30% chance per level up
-	$global:Player.CriticalChance += 1
-	Write-Host "Critical Chance +1%" -ForegroundColor Cyan
-	}
+        
+        if ((Get-Random -Maximum 100) -lt 30) {
+            $global:PlayerBaseStats.CriticalChance += 1
+            $global:Player.CriticalChance = $global:PlayerBaseStats.CriticalChance
+            Write-Host "Critical Chance +1%" -ForegroundColor Cyan
+        }
+        
         Write-Host "`n*** LEVEL UP! You are now level $($global:Player.Level) ***" -ForegroundColor Yellow
         Write-Host "Health +$healthIncrease, Attack +$attackIncrease, Defense +$defenseIncrease, Mana +$manaIncrease" -ForegroundColor Green
+        
+        # Reapply equipment stats after level up
+        Apply-EquipmentStats
         
         # Check for ascension at level 5
         if ($global:Player.Level -eq 5 -and !$global:Player.Ascension) {
             Start-Ascension
         }
-        
-        # Full heal on level up
-        $global:Player.Health = $global:Player.MaxHealth
-        $global:Player.Mana = $global:Player.MaxMana
     }
 }
 
@@ -1215,13 +1547,14 @@ function Start-Ascension {
     $global:Player.Ascension = $selectedAscension
     
     # Apply ascension bonuses
-    $global:Player.MaxHealth += $AscensionBonuses[$selectedAscension].Health
-    $global:Player.Health = $global:Player.MaxHealth
-    $global:Player.MaxMana += $AscensionBonuses[$selectedAscension].Mana
-    $global:Player.Mana = $global:Player.MaxMana
-    $global:Player.Attack += $AscensionBonuses[$selectedAscension].Attack
-    $global:Player.Defense += $AscensionBonuses[$selectedAscension].Defense
-    $global:Player.Speed += $AscensionBonuses[$selectedAscension].Speed
+    $global:PlayerBaseStats.MaxHealth += $AscensionBonuses[$selectedAscension].Health
+    $global:PlayerBaseStats.MaxMana += $AscensionBonuses[$selectedAscension].Mana
+    $global:PlayerBaseStats.Attack += $AscensionBonuses[$selectedAscension].Attack
+    $global:PlayerBaseStats.Defense += $AscensionBonuses[$selectedAscension].Defense
+    $global:PlayerBaseStats.Speed += $AscensionBonuses[$selectedAscension].Speed
+
+    # Reaply equipment stat bonuses logic
+    Apply-EquipmentStats
     
     Write-Typewriter "`nYou have ascended to $selectedAscension!" -ForegroundColor Magenta
     Write-Typewriter "All stats improved!" -ForegroundColor Green
@@ -1236,9 +1569,10 @@ function Show-GameMenu {
     Write-Host "2. Rest (Heal for 10 gold)"
     Write-Host "3. View Stats"
     Write-Host "4. View Spells"
-    Write-Host "5. Visit Shop"
-    Write-Host "6. Show Artifacts"
-    Write-Host "7. Descend to next floor"
+    Write-Host "5. View Equipment"
+    Write-Host "6. View Artifacts"
+    Write-Host "7. Visit Shop"
+    Write-Host "8. Descend to next floor"
     Write-Host "0. Quit Game"
 }
 
@@ -1291,117 +1625,235 @@ function Visit-Shop {
         @{ Name = "Mana Potion"; Cost = 12; Description = "Restore 20 Mana" },
         @{ Name = "Attack Boost"; Cost = 50; Description = "Permanently +2 Attack" },
         @{ Name = "Defense Boost"; Cost = 50; Description = "Permanently +2 Defense" },
-	@{ Name = "Mana Boost"; Cost = 50; Description = "Permanently +5 Mana" },
-        @{ Name = "Critical Charm"; Cost = 95; Description = "Permanently +5% Critical Chance" },
-        @{ Name = "Keen Edge"; Cost = 180; Description = "Permanently +0.5 Critical Multiplier" }
+        @{ Name = "Critical Charm"; Cost = 75; Description = "Permanently +5% Critical Chance" },
+        @{ Name = "Keen Edge"; Cost = 100; Description = "Permanently +0.5 Critical Multiplier" }
     )
     
+    # Display regular items
     for ($i = 0; $i -lt $shopItems.Count; $i++) {
         Write-Host "$($i + 1). $($shopItems[$i].Name) - $($shopItems[$i].Cost) gold" -ForegroundColor White
         Write-Host "   $($shopItems[$i].Description)" -ForegroundColor Gray
     }
+    
+    # Display equipment options
+    Write-Host "7. Buy Equipment" -ForegroundColor White
+    Write-Host "   Purchase new gear for your slots" -ForegroundColor Gray
     Write-Host "8. Sell Artifact (50 gold)" -ForegroundColor White
     Write-Host "   Get rid of an unwanted artifact" -ForegroundColor Gray
     Write-Host "0. Leave Shop" -ForegroundColor Gray
     
     do {
-        $choice = Read-Host "`nSelect item to purchase"
+        $choice = Read-Host "`nSelect option"
     } while ($choice -notin @('0','1','2','3','4','5','6','7','8'))
     
-    if ($choice -eq '0') { return }
-    
-    $selectedItem = $shopItems[[int]$choice - 1]
-    
-    if ($global:Player.Gold -ge $selectedItem.Cost) {
-        $global:Player.Gold -= $selectedItem.Cost
-        
-        switch ($choice) {
-            '1' {
+    switch ($choice) {
+        '0' { return }
+        '1' {
+            if ($global:Player.Gold -ge 15) {
+                $global:Player.Gold -= 15
                 $global:Player.Health = [Math]::Min($global:Player.MaxHealth, $global:Player.Health + 25)
                 Write-Host "Health restored! Current HP: $($global:Player.Health)" -ForegroundColor Green
+            } else {
+                Write-Host "Not enough gold!" -ForegroundColor Red
             }
-            '2' {
+        }
+        '2' {
+            if ($global:Player.Gold -ge 12) {
+                $global:Player.Gold -= 12
                 $global:Player.Mana = [Math]::Min($global:Player.MaxMana, $global:Player.Mana + 20)
                 Write-Host "Mana restored! Current Mana: $($global:Player.Mana)" -ForegroundColor Blue
+            } else {
+                Write-Host "Not enough gold!" -ForegroundColor Red
             }
-            '3' {
+        }
+        '3' {
+            if ($global:Player.Gold -ge 50) {
+                $global:Player.Gold -= 50
                 $global:Player.Attack += 2
                 Write-Host "Attack permanently increased by 2!" -ForegroundColor Red
+            } else {
+                Write-Host "Not enough gold!" -ForegroundColor Red
             }
-            '4' {
+        }
+        '4' {
+            if ($global:Player.Gold -ge 50) {
+                $global:Player.Gold -= 50
                 $global:Player.Defense += 2
                 Write-Host "Defense permanently increased by 2!" -ForegroundColor Green
+            } else {
+                Write-Host "Not enough gold!" -ForegroundColor Red
             }
-            '5' {
-                $global:Player.MaxMana += 5
-                Write-Host "Maximum Mana permanently increased by 5!" -ForegroundColor Green
-            }
-            '6' {
+        }
+        '5' {
+            if ($global:Player.Gold -ge 75) {
+                $global:Player.Gold -= 75
                 $global:Player.CriticalChance += 5
                 Write-Host "Critical chance increased by 5%! Current: $($global:Player.CriticalChance)%" -ForegroundColor Cyan
+            } else {
+                Write-Host "Not enough gold!" -ForegroundColor Red
             }
-            '7' {
+        }
+        '6' {
+            if ($global:Player.Gold -ge 100) {
+                $global:Player.Gold -= 100
                 $global:Player.CriticalMultiplier += 0.5
                 Write-Host "Critical multiplier increased by 0.5! Current: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
+            } else {
+                Write-Host "Not enough gold!" -ForegroundColor Red
             }
-	    '8' {
-		    if ($global:PlayerArtifacts.Count -eq 0) {
-			Write-Host "You have no artifacts to sell!" -ForegroundColor Red
-			return
-		    }
-		    
-		    Write-Host "`nSelect artifact to sell:" -ForegroundColor Yellow
-		    for ($i = 0; $i -lt $global:PlayerArtifacts.Count; $i++) {
-			$artifact = $global:PlayerArtifacts[$i]
-			$tierColor = if ($artifact.Tier -eq "High") { "Magenta" } else { "Yellow" }
-			Write-Host "$($i + 1). $($artifact.Name) [$($artifact.Tier) Tier] - $($artifact.Description)" -ForegroundColor $tierColor
-		    }
-		    Write-Host "0. Cancel" -ForegroundColor Gray
-		    
-		    do {
-			$sellChoice = Read-Host "`nSelect artifact"
-		    } while ($sellChoice -notin @('0') -and ($sellChoice -notmatch '^\d+$' -or [int]$sellChoice -lt 1 -or [int]$sellChoice -gt $global:PlayerArtifacts.Count))
-		    
-		    if ($sellChoice -eq '0') { return }
-		    
-		    $artifactIndex = [int]$sellChoice - 1
-		    if ($artifactIndex -ge 0 -and $artifactIndex -lt $global:PlayerArtifacts.Count) {
-			$soldArtifact = $global:PlayerArtifacts[$artifactIndex]
-			
-			# Calculate sell value based on tier
-			$sellValue = if ($soldArtifact.Tier -eq "High") { 100 } else { 50 }
-			
-			# Remove artifact bonuses
-			foreach ($stat in $soldArtifact.Stats.Keys) {
-			    switch ($stat) {
-				"Health" { 
-				    $global:Player.MaxHealth -= $soldArtifact.Stats[$stat]
-				    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
-				}
-				"Mana" { 
-				    $global:Player.MaxMana -= $soldArtifact.Stats[$stat]
-				    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
-				}
-				"Attack" { $global:Player.Attack -= $soldArtifact.Stats[$stat] }
-				"Defense" { $global:Player.Defense -= $soldArtifact.Stats[$stat] }
-				"Speed" { $global:Player.Speed -= $soldArtifact.Stats[$stat] }
-				"CriticalChance" { $global:Player.CriticalChance -= $soldArtifact.Stats[$stat] }
-				"CriticalMultiplier" { $global:Player.CriticalMultiplier -= $soldArtifact.Stats[$stat] }
-			    }
-			}
-			
-			# Remove artifact from array (FIXED: Use array filtering instead of RemoveAt)
-			$global:PlayerArtifacts = @($global:PlayerArtifacts | Where-Object { $global:PlayerArtifacts.IndexOf($_) -ne $artifactIndex })
-			
-			$global:Player.Gold += $sellValue
-			Write-Host "Sold $($soldArtifact.Name) for $sellValue gold!" -ForegroundColor Yellow
-			Write-Host "Artifact bonuses have been removed." -ForegroundColor Gray
-		    }
-		}
-	
         }
-    } else {
-        Write-Host "Not enough gold!" -ForegroundColor Red
+        '7' {
+            Show-EquipmentShop
+        }
+        '8' {
+            # Existing artifact selling code...
+            if ($global:PlayerArtifacts.Count -eq 0) {
+                Write-Host "You have no artifacts to sell!" -ForegroundColor Red
+                return
+            }
+            
+            Write-Host "`nSelect artifact to sell:" -ForegroundColor Yellow
+            for ($i = 0; $i -lt $global:PlayerArtifacts.Count; $i++) {
+                $artifact = $global:PlayerArtifacts[$i]
+                $tierColor = if ($artifact.Tier -eq "High") { "Magenta" } else { "Yellow" }
+                Write-Host "$($i + 1). $($artifact.Name) [$($artifact.Tier) Tier] - $($artifact.Description)" -ForegroundColor $tierColor
+            }
+            Write-Host "0. Cancel" -ForegroundColor Gray
+            
+            do {
+                $sellChoice = Read-Host "`nSelect artifact"
+            } while ($sellChoice -notin @('0') -and ($sellChoice -notmatch '^\d+$' -or [int]$sellChoice -lt 1 -or [int]$sellChoice -gt $global:PlayerArtifacts.Count))
+            
+            if ($sellChoice -eq '0') { return }
+            
+            $artifactIndex = [int]$sellChoice - 1
+            if ($artifactIndex -ge 0 -and $artifactIndex -lt $global:PlayerArtifacts.Count) {
+                $soldArtifact = $global:PlayerArtifacts[$artifactIndex]
+                
+                # Remove artifact bonuses
+                foreach ($stat in $soldArtifact.Stats.Keys) {
+                    switch ($stat) {
+                        "Health" { 
+                            $global:Player.MaxHealth -= $soldArtifact.Stats[$stat]
+                            $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
+                        }
+                        "Mana" { 
+                            $global:Player.MaxMana -= $soldArtifact.Stats[$stat]
+                            $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
+                        }
+                        "Attack" { $global:Player.Attack -= $soldArtifact.Stats[$stat] }
+                        "Defense" { $global:Player.Defense -= $soldArtifact.Stats[$stat] }
+                        "Speed" { $global:Player.Speed -= $soldArtifact.Stats[$stat] }
+                        "CriticalChance" { $global:Player.CriticalChance -= $soldArtifact.Stats[$stat] }
+                        "CriticalMultiplier" { $global:Player.CriticalMultiplier -= $soldArtifact.Stats[$stat] }
+                    }
+                }
+                
+                # Remove artifact from array
+                $global:PlayerArtifacts = @($global:PlayerArtifacts | Where-Object { $global:PlayerArtifacts.IndexOf($_) -ne $artifactIndex })
+                
+                $global:Player.Gold += 50
+                Write-Host "Sold $($soldArtifact.Name) for 50 gold!" -ForegroundColor Yellow
+            }
+        }
+    }
+}
+
+function Show-EquipmentShop {
+    Write-Host "`n=== EQUIPMENT SHOP ===" -ForegroundColor Cyan
+    Write-Host "Your gold: $($global:Player.Gold)" -ForegroundColor Yellow
+    
+    # Group equipment by slot for display
+    $slots = @("Head", "Body", "Legs", "LeftHand", "RightHand", "Cloak", "Accessory1", "Accessory2")
+    $slotDisplayNames = @{
+        "Head" = "Head"
+        "Body" = "Body" 
+        "Legs" = "Legs"
+        "LeftHand" = "Left Hand"
+        "RightHand" = "Right Hand"
+        "Cloak" = "Cloak"
+        "Accessory1" = "Accessory 1"
+        "Accessory2" = "Accessory 2"
+    }
+    
+    $itemNumber = 1
+    $equipmentOptions = @{}
+    
+    foreach ($slot in $slots) {
+        $availableEquipment = Get-AvailableEquipmentForSlot -Slot $slot
+        $currentEquipment = $global:PlayerEquipment[$slot]
+        
+        Write-Host "`n$($slotDisplayNames[$slot]):" -ForegroundColor White
+        if ($currentEquipment) {
+            Write-Host "  Currently: $($currentEquipment.Name)" -ForegroundColor Green
+        } else {
+            Write-Host "  Currently: [Empty]" -ForegroundColor DarkGray
+        }
+        
+        foreach ($equip in $availableEquipment) {
+            $equipmentOptions[$itemNumber] = $equip
+            Write-Host "  $itemNumber. $($equip.Name) - $($equip.Cost) gold" -ForegroundColor Yellow
+            Write-Host "     $($equip.Description)" -ForegroundColor Gray
+            
+            # Show stats
+            foreach ($stat in $equip.Stats.Keys) {
+                $value = $equip.Stats[$stat]
+                $color = if ($value -gt 0) { "Green" } else { "Red" }
+                $symbol = if ($value -gt 0) { "+" } else { "" }
+                
+                switch ($stat) {
+                    "Health" { Write-Host "     $symbol$value Health" -ForegroundColor $color }
+                    "Mana" { Write-Host "     $symbol$value Mana" -ForegroundColor $color }
+                    "Attack" { Write-Host "     $symbol$value Attack" -ForegroundColor $color }
+                    "Defense" { Write-Host "     $symbol$value Defense" -ForegroundColor $color }
+                    "Speed" { Write-Host "     $symbol$value Speed" -ForegroundColor $color }
+                    "CriticalChance" { Write-Host "     $symbol$value% Critical Chance" -ForegroundColor $color }
+                    "CriticalMultiplier" { Write-Host "     $symbol$value Critical Multiplier" -ForegroundColor $color }
+                }
+            }
+            $itemNumber++
+        }
+    }
+    
+    Write-Host "`n0. Back to Main Shop" -ForegroundColor Gray
+    
+    if ($equipmentOptions.Count -gt 0) {
+        do {
+            $choice = Read-Host "`nSelect equipment to purchase"
+        } while ($choice -ne '0' -and ($choice -notin $equipmentOptions.Keys))
+        
+        if ($choice -eq '0') { return }
+        
+        $selectedEquipment = $equipmentOptions[[int]$choice]
+        
+	if ($global:Player.Gold -ge $selectedEquipment.Cost) {
+	    # Check if slot is occupied
+	    $currentItem = $global:PlayerEquipment[$selectedEquipment.Slot]
+	    if ($currentItem) {
+		Write-Host "You're already wearing $($currentItem.Name) in this slot." -ForegroundColor Yellow
+		Write-Host "Equipping $($selectedEquipment.Name) will replace it." -ForegroundColor Yellow
+		$confirm = Read-Host "Are you sure? (y/n)"
+		if ($confirm -ne 'y') { return }
+	    }
+	    
+	    # Purchase and equip
+	    $global:Player.Gold -= $selectedEquipment.Cost
+	    $global:PlayerEquipment[$selectedEquipment.Slot] = $selectedEquipment
+	    
+	    # Reapply all equipment stats
+	    Apply-EquipmentStats
+	    
+	    Write-Host "`nYou purchased and equipped $($selectedEquipment.Name)!" -ForegroundColor Green
+	    Write-Host "Stats updated accordingly." -ForegroundColor Green
+	    
+	    # Show updated player stats to confirm the change
+	    Write-Host "`nYour updated stats:" -ForegroundColor Cyan
+	    Write-Host "Health: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Red
+	    Write-Host "Attack: $($global:Player.Attack)" -ForegroundColor Yellow
+	    Write-Host "Defense: $($global:Player.Defense)" -ForegroundColor Green
+	} else {
+	    Write-Host "Not enough gold! You need $($selectedEquipment.Cost) gold." -ForegroundColor Red
+	}
     }
 }
 
@@ -1444,13 +1896,16 @@ function Start-Game {
 	    '4' {
 		Show-Spells
 		}
-            '5' {
-                Visit-Shop
-            }
-	    '6' {
-	    	Show-Artifacts
-	    }
+	    '5' {
+		Show-Equipment
+		}           
+            '6' {
+                Show-Artifacts
+            	}
 	    '7' {
+	    	Visit-Shop
+	    	}
+	    '8' {
 		$global:CurrentFloor++
 		Write-Host "You descend to floor $global:CurrentFloor..." -ForegroundColor Cyan
 		    
@@ -1478,7 +1933,8 @@ function Start-Game {
 			Write-Typewriter $randomMessage -Color Cyan -Delay 30
 		    }
 		}
-		'0' {
+		
+	     '0' {
 		$continuePlaying = Show-ExitScreen
 		if (!$continuePlaying) {
 			$global:GameRunning = $false
