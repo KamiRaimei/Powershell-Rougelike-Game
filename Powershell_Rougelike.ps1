@@ -1810,11 +1810,52 @@ function Update-AllStats {
 }
 
 function Show-EquipmentShop {
-    Write-Host "`n=== EQUIPMENT SHOP ===" -ForegroundColor Cyan
-    Write-Host "Your gold: $($global:Player.Gold)" -ForegroundColor Yellow
+    do {
+        Write-Host "`n=== EQUIPMENT SHOP ===" -ForegroundColor Cyan
+        Write-Host "Your gold: $($global:Player.Gold)" -ForegroundColor Yellow
+        
+        # Display equipment slots
+        Write-Host "`nSelect equipment slot to browse:" -ForegroundColor White
+        Write-Host "1. Head" -ForegroundColor Yellow
+        Write-Host "2. Body" -ForegroundColor Yellow
+        Write-Host "3. Legs" -ForegroundColor Yellow
+        Write-Host "4. Left Hand" -ForegroundColor Yellow
+        Write-Host "5. Right Hand" -ForegroundColor Yellow
+        Write-Host "6. Cloak" -ForegroundColor Yellow
+        Write-Host "7. Accessory 1" -ForegroundColor Yellow
+        Write-Host "8. Accessory 2" -ForegroundColor Yellow
+        Write-Host "0. Back to Main Shop" -ForegroundColor Gray
+        
+        $slotChoice = Read-Host "`nSelect slot"
+        
+        $slotMap = @{
+            '1' = 'Head'
+            '2' = 'Body'
+            '3' = 'Legs'
+            '4' = 'LeftHand'
+            '5' = 'RightHand'
+            '6' = 'Cloak'
+            '7' = 'Accessory1'
+            '8' = 'Accessory2'
+        }
+        
+        if ($slotChoice -eq '0') {
+            return
+        }
+        
+        if ($slotMap.ContainsKey($slotChoice)) {
+            $selectedSlot = $slotMap[$slotChoice]
+            Show-EquipmentForSlot -Slot $selectedSlot
+        } else {
+            Write-Host "Invalid selection!" -ForegroundColor Red
+        }
+        
+    } while ($true)
+}
+
+function Show-EquipmentForSlot {
+    param([string]$Slot)
     
-    # Group equipment by slot for display
-    $slots = @("Head", "Body", "Legs", "LeftHand", "RightHand", "Cloak", "Accessory1", "Accessory2")
     $slotDisplayNames = @{
         "Head" = "Head"
         "Body" = "Body" 
@@ -1826,84 +1867,118 @@ function Show-EquipmentShop {
         "Accessory2" = "Accessory 2"
     }
     
-    $itemNumber = 1
-    $equipmentOptions = @{}
-    
-    foreach ($slot in $slots) {
-        $availableEquipment = Get-AvailableEquipmentForSlot -Slot $slot
-        $currentEquipment = $global:PlayerEquipment[$slot]
+    do {
+        Write-Host "`n=== $($slotDisplayNames[$Slot]) EQUIPMENT ===" -ForegroundColor Cyan
+        Write-Host "Your gold: $($global:Player.Gold)" -ForegroundColor Yellow
         
-        Write-Host "`n$($slotDisplayNames[$slot]):" -ForegroundColor White
+        $availableEquipment = Get-AvailableEquipmentForSlot -Slot $Slot
+        $currentEquipment = $global:PlayerEquipment[$Slot]
+        
+        # Show current equipment
         if ($currentEquipment) {
-            Write-Host "  Currently: $($currentEquipment.Name)" -ForegroundColor Green
+            Write-Host "`nCurrently Equipped:" -ForegroundColor White
+            Write-Host "$($currentEquipment.Name)" -ForegroundColor Green
+            Write-Host "  $($currentEquipment.Description)" -ForegroundColor Gray
+            Show-EquipmentStats -Equipment $currentEquipment
         } else {
-            Write-Host "  Currently: [Empty]" -ForegroundColor DarkGray
+            Write-Host "`nCurrently Equipped: [Empty]" -ForegroundColor DarkGray
         }
         
-        foreach ($equip in $availableEquipment) {
-            $equipmentOptions[$itemNumber] = $equip
-            Write-Host "  $itemNumber. $($equip.Name) - $($equip.Cost) gold" -ForegroundColor Yellow
-            Write-Host "     $($equip.Description)" -ForegroundColor Gray
-            
-            # Show stats
-            foreach ($stat in $equip.Stats.Keys) {
-                $value = $equip.Stats[$stat]
-                $color = if ($value -gt 0) { "Green" } else { "Red" }
-                $symbol = if ($value -gt 0) { "+" } else { "" }
-                
-                switch ($stat) {
-                    "Health" { Write-Host "     $symbol$value Health" -ForegroundColor $color }
-                    "Mana" { Write-Host "     $symbol$value Mana" -ForegroundColor $color }
-                    "Attack" { Write-Host "     $symbol$value Attack" -ForegroundColor $color }
-                    "Defense" { Write-Host "     $symbol$value Defense" -ForegroundColor $color }
-                    "Speed" { Write-Host "     $symbol$value Speed" -ForegroundColor $color }
-                    "CriticalChance" { Write-Host "     $symbol$value% Critical Chance" -ForegroundColor $color }
-                    "CriticalMultiplier" { Write-Host "     $symbol$value Critical Multiplier" -ForegroundColor $color }
-                }
+        Write-Host "`nAvailable Items:" -ForegroundColor White
+        
+        if ($availableEquipment.Count -eq 0) {
+            Write-Host "No items available for this slot." -ForegroundColor Yellow
+            Write-Host "Press any key to return to slot selection..." -ForegroundColor Gray
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+            return
+        }
+        
+        # Display available items
+        for ($i = 0; $i -lt $availableEquipment.Count; $i++) {
+            $equip = $availableEquipment[$i]
+            Write-Host "`n$($i + 1). $($equip.Name) - $($equip.Cost) gold" -ForegroundColor Yellow
+            Write-Host "   $($equip.Description)" -ForegroundColor Gray
+            Show-EquipmentStats -Equipment $equip
+        }
+        
+        Write-Host "`n0. Back to Slot Selection" -ForegroundColor Gray
+        
+        $choice = Read-Host "`nSelect item to purchase"
+        
+        if ($choice -eq '0') {
+            return
+        }
+        
+        if ($choice -match '^\d+$' -and [int]$choice -ge 1 -and [int]$choice -le $availableEquipment.Count) {
+            $selectedEquipment = $availableEquipment[[int]$choice - 1]
+            Purchase-Equipment -Equipment $selectedEquipment -Slot $Slot
+        } else {
+            Write-Host "Invalid selection!" -ForegroundColor Red
+        }
+        
+    } while ($true)
+}
+
+function Purchase-Equipment {
+    param($Equipment, [string]$Slot)
+    
+    if ($global:Player.Gold -ge $Equipment.Cost) {
+        # Check if slot is occupied
+        $currentItem = $global:PlayerEquipment[$Slot]
+        if ($currentItem) {
+            Write-Host "`nYou're already wearing $($currentItem.Name) in this slot." -ForegroundColor Yellow
+            Write-Host "Equipping $($Equipment.Name) will replace it." -ForegroundColor Yellow
+            $confirm = Read-Host "Are you sure? (y/n)"
+            if ($confirm -ne 'y' -and $confirm -ne 'Y') { 
+                return 
             }
-            $itemNumber++
         }
+        
+        # Purchase and equip
+        $global:Player.Gold -= $Equipment.Cost
+        $global:PlayerEquipment[$Slot] = $Equipment
+        
+        # Reapply all equipment stats
+        Apply-EquipmentStats
+        
+        Write-Host "`nYou purchased and equipped $($Equipment.Name)!" -ForegroundColor Green
+        Write-Host "Stats updated accordingly." -ForegroundColor Green
+        
+        # Show updated player stats
+        Write-Host "`nYour updated stats:" -ForegroundColor Cyan
+        Write-Host "Health: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Red
+        Write-Host "Mana: $($global:Player.Mana)/$($global:Player.MaxMana)" -ForegroundColor Blue
+        Write-Host "Attack: $($global:Player.Attack)" -ForegroundColor Yellow
+        Write-Host "Defense: $($global:Player.Defense)" -ForegroundColor Green
+        Write-Host "Speed: $($global:Player.Speed)" -ForegroundColor White
+        
+        Write-Host "`nPress any key to continue..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        
+    } else {
+        Write-Host "Not enough gold! You need $($Equipment.Cost) gold." -ForegroundColor Red
+        Write-Host "Press any key to continue..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     }
+}
+
+function Show-EquipmentStats {
+    param($Equipment)
     
-    Write-Host "`n0. Back to Main Shop" -ForegroundColor Gray
-    
-    if ($equipmentOptions.Count -gt 0) {
-        do {
-            $choice = Read-Host "`nSelect equipment to purchase"
-        } while ($choice -ne '0' -and ($choice -notin $equipmentOptions.Keys))
+    foreach ($stat in $Equipment.Stats.Keys) {
+        $value = $Equipment.Stats[$stat]
+        $color = if ($value -gt 0) { "Green" } else { "Red" }
+        $symbol = if ($value -gt 0) { "+" } else { "" }
         
-        if ($choice -eq '0') { return }
-        
-        $selectedEquipment = $equipmentOptions[[int]$choice]
-        
-	if ($global:Player.Gold -ge $selectedEquipment.Cost) {
-	    # Check if slot is occupied
-	    $currentItem = $global:PlayerEquipment[$selectedEquipment.Slot]
-	    if ($currentItem) {
-		Write-Host "You're already wearing $($currentItem.Name) in this slot." -ForegroundColor Yellow
-		Write-Host "Equipping $($selectedEquipment.Name) will replace it." -ForegroundColor Yellow
-		$confirm = Read-Host "Are you sure? (y/n)"
-		if ($confirm -ne 'y') { return }
-	    }
-	    
-	    # Purchase and equip
-	    $global:Player.Gold -= $selectedEquipment.Cost
-	    $global:PlayerEquipment[$selectedEquipment.Slot] = $selectedEquipment
-	    
-	    # Reapply all equipment stats
-	    Apply-EquipmentStats
-	    
-	    Write-Host "`nYou purchased and equipped $($selectedEquipment.Name)!" -ForegroundColor Green
-	    Write-Host "Stats updated accordingly." -ForegroundColor Green
-	    
-	    # Show updated player stats to confirm the change
-	    Write-Host "`nYour updated stats:" -ForegroundColor Cyan
-	    Write-Host "Health: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Red
-	    Write-Host "Attack: $($global:Player.Attack)" -ForegroundColor Yellow
-	    Write-Host "Defense: $($global:Player.Defense)" -ForegroundColor Green
-	} else {
-	    Write-Host "Not enough gold! You need $($selectedEquipment.Cost) gold." -ForegroundColor Red
-	}
+        switch ($stat) {
+            "Health" { Write-Host "   $symbol$value Health" -ForegroundColor $color }
+            "Mana" { Write-Host "   $symbol$value Mana" -ForegroundColor $color }
+            "Attack" { Write-Host "   $symbol$value Attack" -ForegroundColor $color }
+            "Defense" { Write-Host "   $symbol$value Defense" -ForegroundColor $color }
+            "Speed" { Write-Host "   $symbol$value Speed" -ForegroundColor $color }
+            "CriticalChance" { Write-Host "   $symbol$value% Critical Chance" -ForegroundColor $color }
+            "CriticalMultiplier" { Write-Host "   $symbol$value Critical Multiplier" -ForegroundColor $color }
+        }
     }
 }
 
