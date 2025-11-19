@@ -422,6 +422,13 @@ $ShopEquipment = @(
     @{ Name = "Crystal Pendant"; Slot = "Accessory2"; Cost = 130; Stats = @{ Mana = 15; Defense = 4; Health = 8 }; Description = "Balanced magical protection" }
 )
 
+
+#Equipment refinement game states variable
+$global:RefinementCosts = @(100, 250, 500, 1000, 2000, 4000, 8000, 15000, 30000, 50000)  # +1 to +10 costs
+$global:RefinementSuccessRates = @(100, 90, 80, 70, 60, 50, 40, 30, 20, 10)  # Percentage success rates
+$global:RefinementBreakRates = @(0, 0, 0, 10, 20, 30, 40, 50, 60, 70)  # Percentage break rates (if failure)
+$global:RefinementStatMultipliers = @(1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0)  # Stat multipliers per level
+
 # Artifact System
 $global:PlayerArtifacts = @()
 $global:MaxArtifacts = 5  # Maximum artifacts player can carry
@@ -560,6 +567,18 @@ function Show-PlayerStats {
     Write-Host "Critical Chance: $($global:Player.CriticalChance)%" -ForegroundColor Cyan
     Write-Host "Critical Multiplier: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
     Write-Host "Gold: $($global:Player.Gold)" -ForegroundColor Yellow
+    
+    # Show refinement summary
+    $totalRefinement = 0
+    foreach ($slot in $global:PlayerEquipment.Keys) {
+        $equipment = $global:PlayerEquipment[$slot]
+        if ($equipment) {
+            $totalRefinement += $equipment.RefinementLevel
+        }
+    }
+    if ($totalRefinement -gt 0) {
+        Write-Host "Total Refinement: +$totalRefinement" -ForegroundColor Magenta
+    }
 }
 
 function Show-GameOverScreen {
@@ -640,6 +659,7 @@ function Initialize-GameState {
         Accessory1 = $null
         Accessory2 = $null
     }
+    $global:PlayerBaseStats = $null
 }
 
 function Show-Spells {
@@ -702,70 +722,84 @@ function Show-Equipment {
         
         if ($equipment) {
             $hasEquipment = $true
-            Write-Host "`n$($slot.Display): $($equipment.Name)" -ForegroundColor Green
+            $refinementLevel = $equipment.RefinementLevel
+            $isBroken = $equipment.IsBroken
+            
+            $statusColor = if ($isBroken) { "Red" } else { "Green" }
+            $refinementText = if ($refinementLevel -gt 0) { " [+$refinementLevel]" } else { "" }
+            $brokenText = if ($isBroken) { " [BROKEN]" } else { "" }
+            
+            Write-Host "`n$($slot.Display): $($equipment.Name)$refinementText$brokenText" -ForegroundColor $statusColor
             Write-Host "   $($equipment.Description)" -ForegroundColor Gray
             
-            # Show equipment stats
-            foreach ($stat in $equipment.Stats.Keys) {
-                $value = $equipment.Stats[$stat]
-                $color = if ($value -gt 0) { "Green" } else { "Red" }
-                $symbol = if ($value -gt 0) { "+" } else { "" }
+            # Get base stats and refined stats
+            $baseStats = $equipment.Stats
+            $refinedStats = Get-RefinementBonus -Equipment $equipment
+            
+            # Show equipment stats with refinement improvements
+            foreach ($stat in $baseStats.Keys) {
+                $baseValue = $baseStats[$stat]
+                $refinedValue = $refinedStats[$stat]
+                $improvement = $refinedValue - $baseValue
+                
+                $color = if ($improvement -gt 0) { "Cyan" } else { "White" }
+                $improvementText = if ($improvement -gt 0) { " (+$improvement)" } else { "" }
                 
                 switch ($stat) {
                     "Health" { 
-                        Write-Host "   $symbol$value Health" -ForegroundColor $color
+                        Write-Host "   $refinedValue Health$improvementText" -ForegroundColor $color
                         if ($totalBonuses.ContainsKey("Health")) {
-                            $totalBonuses["Health"] += $value
+                            $totalBonuses["Health"] += $refinedValue
                         } else {
-                            $totalBonuses["Health"] = $value
+                            $totalBonuses["Health"] = $refinedValue
                         }
                     }
                     "Mana" { 
-                        Write-Host "   $symbol$value Mana" -ForegroundColor $color
+                        Write-Host "   $refinedValue Mana$improvementText" -ForegroundColor $color
                         if ($totalBonuses.ContainsKey("Mana")) {
-                            $totalBonuses["Mana"] += $value
+                            $totalBonuses["Mana"] += $refinedValue
                         } else {
-                            $totalBonuses["Mana"] = $value
+                            $totalBonuses["Mana"] = $refinedValue
                         }
                     }
                     "Attack" { 
-                        Write-Host "   $symbol$value Attack" -ForegroundColor $color
+                        Write-Host "   $refinedValue Attack$improvementText" -ForegroundColor $color
                         if ($totalBonuses.ContainsKey("Attack")) {
-                            $totalBonuses["Attack"] += $value
+                            $totalBonuses["Attack"] += $refinedValue
                         } else {
-                            $totalBonuses["Attack"] = $value
+                            $totalBonuses["Attack"] = $refinedValue
                         }
                     }
                     "Defense" { 
-                        Write-Host "   $symbol$value Defense" -ForegroundColor $color
+                        Write-Host "   $refinedValue Defense$improvementText" -ForegroundColor $color
                         if ($totalBonuses.ContainsKey("Defense")) {
-                            $totalBonuses["Defense"] += $value
+                            $totalBonuses["Defense"] += $refinedValue
                         } else {
-                            $totalBonuses["Defense"] = $value
+                            $totalBonuses["Defense"] = $refinedValue
                         }
                     }
                     "Speed" { 
-                        Write-Host "   $symbol$value Speed" -ForegroundColor $color
+                        Write-Host "   $refinedValue Speed$improvementText" -ForegroundColor $color
                         if ($totalBonuses.ContainsKey("Speed")) {
-                            $totalBonuses["Speed"] += $value
+                            $totalBonuses["Speed"] += $refinedValue
                         } else {
-                            $totalBonuses["Speed"] = $value
+                            $totalBonuses["Speed"] = $refinedValue
                         }
                     }
                     "CriticalChance" { 
-                        Write-Host "   $symbol$value% Critical Chance" -ForegroundColor $color
+                        Write-Host "   $refinedValue% Critical Chance$improvementText" -ForegroundColor $color
                         if ($totalBonuses.ContainsKey("CriticalChance")) {
-                            $totalBonuses["CriticalChance"] += $value
+                            $totalBonuses["CriticalChance"] += $refinedValue
                         } else {
-                            $totalBonuses["CriticalChance"] = $value
+                            $totalBonuses["CriticalChance"] = $refinedValue
                         }
                     }
                     "CriticalMultiplier" { 
-                        Write-Host "   $symbol$value Critical Multiplier" -ForegroundColor $color
+                        Write-Host "   $refinedValue Critical Multiplier$improvementText" -ForegroundColor $color
                         if ($totalBonuses.ContainsKey("CriticalMultiplier")) {
-                            $totalBonuses["CriticalMultiplier"] += $value
+                            $totalBonuses["CriticalMultiplier"] += $refinedValue
                         } else {
-                            $totalBonuses["CriticalMultiplier"] = $value
+                            $totalBonuses["CriticalMultiplier"] = $refinedValue
                         }
                     }
                 }
@@ -780,7 +814,7 @@ function Show-Equipment {
         Write-Host "Visit the shop to purchase equipment!" -ForegroundColor Gray
     }
     
-    # Show total equipment bonuses
+    # Show total equipment bonuses (refined)
     if ($totalBonuses.Count -gt 0) {
         Write-Host "`n=== TOTAL EQUIPMENT BONUSES ===" -ForegroundColor Cyan
         foreach ($stat in $totalBonuses.Keys) {
@@ -805,70 +839,18 @@ function Show-Equipment {
 }
 
 function Apply-EquipmentStats {
-    # First, remove all equipment bonuses to avoid double counting
-    Remove-EquipmentStats
-    
-    # Apply stats from all equipped items
-    foreach ($slot in $global:PlayerEquipment.Keys) {
-        $equipment = $global:PlayerEquipment[$slot]
-        if ($equipment) {
-            foreach ($stat in $equipment.Stats.Keys) {
-                $value = $equipment.Stats[$stat]
-                switch ($stat) {
-                    "Health" { 
-                        $global:Player.MaxHealth += $value
-                        # Only add to current health if it would exceed max (like healing)
-                        if ($global:Player.Health -eq $global:Player.MaxHealth - $value) {
-                            $global:Player.Health += $value
-                        }
-                    }
-                    "Mana" { 
-                        $global:Player.MaxMana += $value
-                        # Only add to current mana if it would exceed max
-                        if ($global:Player.Mana -eq $global:Player.MaxMana - $value) {
-                            $global:Player.Mana += $value
-                        }
-                    }
-                    "Attack" { $global:Player.Attack += $value }
-                    "Defense" { $global:Player.Defense += $value }
-                    "Speed" { $global:Player.Speed += $value }
-                    "CriticalChance" { $global:Player.CriticalChance += $value }
-                    "CriticalMultiplier" { $global:Player.CriticalMultiplier += $value }
-                }
-            }
-        }
-    }
-    
-    # Ensure health and mana don't exceed their new maximums
-    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
-    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
-}
-
-function Remove-EquipmentStats {
-    # Reset player stats to base values
-    $global:Player.MaxHealth = $global:PlayerBaseStats.MaxHealth
-    $global:Player.MaxMana = $global:PlayerBaseStats.MaxMana
-    $global:Player.Attack = $global:PlayerBaseStats.Attack
-    $global:Player.Defense = $global:PlayerBaseStats.Defense
-    $global:Player.Speed = $global:PlayerBaseStats.Speed
-    $global:Player.CriticalChance = $global:PlayerBaseStats.CriticalChance
-    $global:Player.CriticalMultiplier = $global:PlayerBaseStats.CriticalMultiplier
-    
-    # Ensure health/mana don't exceed new maximums
-    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
-    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
-}
-
-function Apply-EquipmentStats {
     # First remove all equipment bonuses
     Remove-EquipmentStats
     
     # Then apply equipment bonuses on top of base stats
     foreach ($slot in $global:PlayerEquipment.Keys) {
         $equipment = $global:PlayerEquipment[$slot]
-        if ($equipment) {
-            foreach ($stat in $equipment.Stats.Keys) {
-                $value = $equipment.Stats[$stat]
+        if ($equipment -and !$equipment.IsBroken) {
+            # Get the refined stats
+            $refinedStats = Get-RefinementBonus -Equipment $equipment
+            
+            foreach ($stat in $refinedStats.Keys) {
+                $value = $refinedStats[$stat]
                 switch ($stat) {
                     "Health" { 
                         $global:Player.MaxHealth += $value
@@ -899,10 +881,311 @@ function Apply-EquipmentStats {
     $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
 }
 
+function Remove-EquipmentStats {
+    # Store current health/mana percentages to maintain them after stat removal
+    $healthPercent = if ($global:Player.MaxHealth -gt 0) { $global:Player.Health / $global:Player.MaxHealth } else { 1 }
+    $manaPercent = if ($global:Player.MaxMana -gt 0) { $global:Player.Mana / $global:Player.MaxMana } else { 1 }
+    
+    # Reset player stats to base values only (no equipment)
+    $global:Player.MaxHealth = $global:PlayerBaseStats.MaxHealth
+    $global:Player.MaxMana = $global:PlayerBaseStats.MaxMana
+    $global:Player.Attack = $global:PlayerBaseStats.Attack
+    $global:Player.Defense = $global:PlayerBaseStats.Defense
+    $global:Player.Speed = $global:PlayerBaseStats.Speed
+    $global:Player.CriticalChance = $global:PlayerBaseStats.CriticalChance
+    $global:Player.CriticalMultiplier = $global:PlayerBaseStats.CriticalMultiplier
+    
+    # Restore health and mana percentages
+    $global:Player.Health = [Math]::Round($global:Player.MaxHealth * $healthPercent)
+    $global:Player.Mana = [Math]::Round($global:Player.MaxMana * $manaPercent)
+    
+    # Ensure minimum values
+    $global:Player.Health = [Math]::Max(1, $global:Player.Health)
+    $global:Player.Mana = [Math]::Max(0, $global:Player.Mana)
+}
+
+function Apply-EquipmentStats {
+    # First remove all equipment bonuses to avoid double counting
+    Remove-EquipmentStats
+    
+    # Store current health/mana percentages
+    $healthPercent = if ($global:Player.MaxHealth -gt 0) { $global:Player.Health / $global:Player.MaxHealth } else { 1 }
+    $manaPercent = if ($global:Player.MaxMana -gt 0) { $global:Player.Mana / $global:Player.MaxMana } else { 1 }
+    
+    # Then apply equipment bonuses on top of base stats
+    foreach ($slot in $global:PlayerEquipment.Keys) {
+        $equipment = $global:PlayerEquipment[$slot]
+        if ($equipment -and !$equipment.IsBroken) {
+            # Get the refined stats for this equipment
+            $refinedStats = Get-RefinementBonus -Equipment $equipment
+            
+            foreach ($stat in $refinedStats.Keys) {
+                $value = $refinedStats[$stat]
+                switch ($stat) {
+                    "Health" { 
+                        $global:Player.MaxHealth += $value
+                    }
+                    "Mana" { 
+                        $global:Player.MaxMana += $value
+                    }
+                    "Attack" { $global:Player.Attack += $value }
+                    "Defense" { $global:Player.Defense += $value }
+                    "Speed" { $global:Player.Speed += $value }
+                    "CriticalChance" { $global:Player.CriticalChance += $value }
+                    "CriticalMultiplier" { $global:Player.CriticalMultiplier += $value }
+                }
+            }
+        }
+    }
+    
+    # Restore health and mana percentages after stat changes
+    $global:Player.Health = [Math]::Round($global:Player.MaxHealth * $healthPercent)
+    $global:Player.Mana = [Math]::Round($global:Player.MaxMana * $manaPercent)
+    
+    # Ensure health and mana don't exceed their new maximums
+    $global:Player.Health = [Math]::Min($global:Player.Health, $global:Player.MaxHealth)
+    $global:Player.Mana = [Math]::Min($global:Player.Mana, $global:Player.MaxMana)
+    
+    # Ensure minimum values
+    $global:Player.Health = [Math]::Max(1, $global:Player.Health)
+    $global:Player.Mana = [Math]::Max(0, $global:Player.Mana)
+}
+
 function Get-AvailableEquipmentForSlot {
     param([string]$Slot)
     
     return $ShopEquipment | Where-Object { $_.Slot -eq $Slot }
+}
+
+function Show-RefinementMenu {
+    do {
+        Write-Host "`n=== EQUIPMENT REFINEMENT ===" -ForegroundColor Cyan
+        Write-Host "Your gold: $($global:Player.Gold)" -ForegroundColor Yellow
+        Write-Host "`nSelect equipment to refine:" -ForegroundColor White
+        
+        $slots = @("Head", "Body", "Legs", "LeftHand", "RightHand", "Cloak", "Accessory1", "Accessory2")
+        $slotOptions = @{}
+        $optionNumber = 1
+        
+        foreach ($slot in $slots) {
+            $equipment = $global:PlayerEquipment[$slot]
+            if ($equipment -and $equipment.RefinementLevel -lt 10 -and !$equipment.IsBroken) {
+                $slotOptions[$optionNumber] = $slot
+                Write-Host "$optionNumber. $($equipment.Name) [+$($equipment.RefinementLevel)]" -ForegroundColor Green
+                Write-Host "   Next level: +$($equipment.RefinementLevel + 1) | Cost: $($global:RefinementCosts[$equipment.RefinementLevel]) gold" -ForegroundColor Gray
+                Write-Host "   Success: $($global:RefinementSuccessRates[$equipment.RefinementLevel])% | Break: $($global:RefinementBreakRates[$equipment.RefinementLevel])%" -ForegroundColor $(if ($global:RefinementSuccessRates[$equipment.RefinementLevel] -ge 70) { "Green" } elseif ($global:RefinementSuccessRates[$equipment.RefinementLevel] -ge 40) { "Yellow" } else { "Red" })
+                $optionNumber++
+            }
+        }
+        
+        if ($slotOptions.Count -eq 0) {
+            Write-Host "No equipment available for refinement!" -ForegroundColor Yellow
+            Write-Host "All equipment is either broken or already at maximum refinement." -ForegroundColor Gray
+            Write-Host "Press any key to continue..." -ForegroundColor Gray
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+            return
+        }
+        
+        Write-Host "`n0. Back to Shop" -ForegroundColor Gray
+        
+        $choice = Read-Host "`nSelect equipment"
+        
+        if ($choice -eq '0') { return }
+        
+        if ($slotOptions.ContainsKey([int]$choice)) {
+            $selectedSlot = $slotOptions[[int]$choice]
+            Start-Refinement -Slot $selectedSlot
+        } else {
+            Write-Host "Invalid selection!" -ForegroundColor Red
+        }
+        
+    } while ($true)
+}
+
+function Start-Refinement {
+    param([string]$Slot)
+    
+    $equipment = $global:PlayerEquipment[$Slot]
+    $currentLevel = $equipment.RefinementLevel
+    $nextLevel = $currentLevel + 1
+    
+    if ($nextLevel -gt 10) {
+        Write-Host "This equipment is already at maximum refinement!" -ForegroundColor Yellow
+        return
+    }
+    
+    $cost = $global:RefinementCosts[$currentLevel]
+    $successRate = $global:RefinementSuccessRates[$currentLevel]
+    $breakRate = $global:RefinementBreakRates[$currentLevel]
+    
+    Write-Host "`n=== REFINING $($equipment.Name) ===" -ForegroundColor Cyan
+    Write-Host "Current: +$currentLevel" -ForegroundColor White
+    Write-Host "Target: +$nextLevel" -ForegroundColor Yellow
+    Write-Host "Cost: $cost gold" -ForegroundColor Yellow
+    Write-Host "Success Rate: $successRate%" -ForegroundColor Green
+    Write-Host "Break Rate: $breakRate%" -ForegroundColor Red
+    
+    if ($global:Player.Gold -lt $cost) {
+        Write-Host "Not enough gold! You need $cost gold." -ForegroundColor Red
+        Write-Host "Press any key to continue..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        return
+    }
+    
+    Write-Host "`nAre you sure you want to attempt refinement?" -ForegroundColor Yellow
+    Write-Host "1. Yes, attempt refinement" -ForegroundColor Green
+    Write-Host "2. No, go back" -ForegroundColor Gray
+    
+    $confirm = Read-Host "`nSelect option"
+    
+    if ($confirm -ne '1') { return }
+    
+    # Deduct cost
+    $global:Player.Gold -= $cost
+    
+    # Roll for success
+    $roll = Get-Random -Maximum 100
+    Write-Typewriter "`nThe blacksmith begins refining your $($equipment.Name)..." -Color Yellow -Delay 50
+    
+    if ($roll -lt $successRate) {
+        # SUCCESS
+        $equipment.RefinementLevel = $nextLevel
+        Write-Typewriter "*** SUCCESS! $($equipment.Name) is now +$nextLevel! ***" -Color Green -Delay 50
+        
+        # Show stat improvements
+        $oldStats = Get-RefinementBonus -Equipment $equipment -Level $currentLevel
+        $newStats = Get-RefinementBonus -Equipment $equipment -Level $nextLevel
+        
+        Write-Host "`nStat Improvements:" -ForegroundColor Cyan
+        foreach ($stat in $equipment.Stats.Keys) {
+            $improvement = $newStats[$stat] - $oldStats[$stat]
+            if ($improvement -gt 0) {
+                Write-Host ("  {0}: +{1}" -f $stat, $improvement) -ForegroundColor Green
+            }
+        }
+        
+        # Special effects at certain levels
+        if ($nextLevel -eq 5) {
+            Write-Host "`nThe equipment glows with newfound power!" -ForegroundColor Magenta
+        } elseif ($nextLevel -eq 10) {
+            Write-Host "`nLEGENDARY! The equipment radiates immense power!" -ForegroundColor Yellow
+        }
+        
+    } else {
+        # FAILURE
+        Write-Typewriter "*** REFINEMENT FAILED! ***" -Color Red -Delay 50
+        
+        # Check if equipment breaks
+        $breakRoll = Get-Random -Maximum 100
+        if ($breakRoll -lt $breakRate) {
+            $equipment.IsBroken = $true
+            Write-Typewriter "CATASTROPHIC FAILURE! Your $($equipment.Name) has been destroyed!" -Color DarkRed -Delay 50
+            $global:PlayerEquipment[$Slot] = $null
+        } else {
+            Write-Host "The equipment survived the failed attempt." -ForegroundColor Yellow
+        }
+    }
+    
+    # CRITICAL: Force complete stat recalculation
+    Write-Host "`nRecalculating all stats..." -ForegroundColor Cyan
+    Remove-EquipmentStats
+    Apply-EquipmentStats
+    
+    # Show updated player stats
+    Write-Host "`nYour updated stats:" -ForegroundColor Yellow
+    Write-Host "Health: $($global:Player.Health)/$($global:Player.MaxHealth)" -ForegroundColor Red
+    Write-Host "Mana: $($global:Player.Mana)/$($global:Player.MaxMana)" -ForegroundColor Blue
+    Write-Host "Attack: $($global:Player.Attack)" -ForegroundColor Yellow
+    Write-Host "Defense: $($global:Player.Defense)" -ForegroundColor Green
+    Write-Host "Speed: $($global:Player.Speed)" -ForegroundColor White
+    Write-Host "Critical Chance: $($global:Player.CriticalChance)%" -ForegroundColor Cyan
+    Write-Host "Critical Multiplier: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
+    
+    # Debug output (you can remove this after testing)
+    # Debug-PlayerStats
+    
+    Write-Host "`nPress any key to continue..." -ForegroundColor Gray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
+function Get-RefinementBonus {
+    param($Equipment, [int]$Level = $Equipment.RefinementLevel)
+    
+    $bonusStats = @{}
+    foreach ($stat in $Equipment.Stats.Keys) {
+        $baseValue = $Equipment.Stats[$stat]
+        $multiplier = $global:RefinementStatMultipliers[$Level]
+        $bonusStats[$stat] = [Math]::Round($baseValue * $multiplier)
+    }
+    return $bonusStats
+}
+
+function Add-SpecialRefinementBonus {
+    param($Equipment)
+    
+    # Add special bonuses for +10 items based on equipment type
+    switch ($Equipment.Slot) {
+        "Head" {
+            if ($Equipment.Stats.ContainsKey("Mana")) {
+                # Magic headgear - add spell power
+                $Equipment.Stats["CriticalMultiplier"] = ($Equipment.Stats["CriticalMultiplier"] + 0.5)
+            } else {
+                # Physical headgear - add attack
+                $Equipment.Stats["Attack"] = ($Equipment.Stats["Attack"] + 5)
+            }
+        }
+        "Body" {
+            $Equipment.Stats["Health"] = ($Equipment.Stats["Health"] + 25)
+        }
+        "RightHand" {
+            $Equipment.Stats["CriticalChance"] = ($Equipment.Stats["CriticalChance"] + 5)
+        }
+        # Add more special bonuses for other slots
+    }
+}
+
+function Show-RepairMenu {
+    Write-Host "`n=== EQUIPMENT REPAIR ===" -ForegroundColor Cyan
+    Write-Host "Your gold: $($global:Player.Gold)" -ForegroundColor Yellow
+    
+    $brokenItems = @()
+    foreach ($slot in $global:PlayerEquipment.Keys) {
+        $equipment = $global:PlayerEquipment[$slot]
+        if ($equipment -and $equipment.IsBroken) {
+            $brokenItems += @{Slot = $slot; Equipment = $equipment}
+        }
+    }
+    
+    if ($brokenItems.Count -eq 0) {
+        Write-Host "No broken equipment to repair!" -ForegroundColor Green
+        return
+    }
+    
+    Write-Host "`nBroken equipment:" -ForegroundColor White
+    for ($i = 0; $i -lt $brokenItems.Count; $i++) {
+        $item = $brokenItems[$i]
+        $repairCost = $global:RefinementCosts[$item.Equipment.RefinementLevel] * 0.5  # 50% of refinement cost
+        Write-Host "$($i + 1). $($item.Equipment.Name) [+$($item.Equipment.RefinementLevel)] - Repair: $repairCost gold" -ForegroundColor Red
+    }
+    
+    Write-Host "0. Back" -ForegroundColor Gray
+    
+    $choice = Read-Host "`nSelect equipment to repair"
+    if ($choice -eq '0') { return }
+    
+    $selectedIndex = [int]$choice - 1
+    if ($selectedIndex -ge 0 -and $selectedIndex -lt $brokenItems.Count) {
+        $selectedItem = $brokenItems[$selectedIndex]
+        $repairCost = [Math]::Round($global:RefinementCosts[$selectedItem.Equipment.RefinementLevel] * 0.5)
+        
+        if ($global:Player.Gold -ge $repairCost) {
+            $global:Player.Gold -= $repairCost
+            $selectedItem.Equipment.IsBroken = $false
+            Write-Host "Repaired $($selectedItem.Equipment.Name) for $repairCost gold!" -ForegroundColor Green
+        } else {
+            Write-Host "Not enough gold! Need $repairCost gold." -ForegroundColor Red
+        }
+    }
 }
 
 function Get-RandomMonster {
@@ -978,6 +1261,13 @@ function Get-RandomMonster {
 	    
 	    return $baseMonster
 	}
+}
+
+function Update-EquipmentWithRefinement {
+    foreach ($item in $ShopEquipment) {
+        $item.RefinementLevel = 0
+        $item.IsBroken = $false
+    }
 }
 
 function Get-RandomArtifact {
@@ -1679,14 +1969,14 @@ function Visit-Shop {
     # Display equipment options
     Write-Host "" #Page break
     Write-Host "7. Buy Equipment" -ForegroundColor White
-    Write-Host "   Purchase new gear for your slots" -ForegroundColor Gray
-    Write-Host "8. Sell Artifact (50 gold)" -ForegroundColor White
-    Write-Host "   Get rid of an unwanted artifact" -ForegroundColor Gray
+    Write-Host "8. Refine Equipment" -ForegroundColor Cyan
+    Write-Host "9. Repair Broken Equipment" -ForegroundColor Yellow
+    Write-Host "10. Sell Artifact (50 gold)" -ForegroundColor White
     Write-Host "0. Leave Shop" -ForegroundColor Gray
     
     do {
         $choice = Read-Host "`nSelect option"
-    } while ($choice -notin @('0','1','2','3','4','5','6','7','8'))
+    } while ($choice -notin @('0','1','2','3','4','5','6','7','8','9','10'))
     
     switch ($choice) {
         '0' { return }
@@ -1751,7 +2041,14 @@ function Visit-Shop {
         '7' {
             Show-EquipmentShop
         }
+
         '8' {
+            Show-RefinementMenu
+	    }
+        '9' {
+            Show-RepairMenu
+        }
+        '10' {
 
             if ($global:PlayerArtifacts.Count -eq 0) {
                 Write-Host "You have no artifacts to sell!" -ForegroundColor Red
@@ -1962,11 +2259,24 @@ function Purchase-Equipment {
             }
         }
         
-        # Purchase and equip
+        # Purchase and equip - CREATE A COPY WITH REFINEMENT PROPERTIES
         $global:Player.Gold -= $Equipment.Cost
-        $global:PlayerEquipment[$Slot] = $Equipment
+        
+        # Create a copy of the equipment with refinement properties
+        $equippedItem = @{
+            Name = $Equipment.Name
+            Slot = $Equipment.Slot
+            Cost = $Equipment.Cost
+            Stats = $Equipment.Stats
+            Description = $Equipment.Description
+            RefinementLevel = 0
+            IsBroken = $false
+        }
+        
+        $global:PlayerEquipment[$Slot] = $equippedItem
         
         # Reapply all equipment stats
+        Remove-EquipmentStats
         Apply-EquipmentStats
         
         Write-Host "`nYou purchased and equipped $($Equipment.Name)!" -ForegroundColor Green
