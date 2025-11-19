@@ -274,10 +274,12 @@ $MonsterTypes = @(
 # Boss Definitions - Need more variant
 $BossTypes = @(
     @{ Name = "Ancient Dragon"; BaseHealth = 50; BaseAttack = 15; BaseDefense = 8; XP = 200; Gold = 100 },
+    @{ Name = "Basilisk King"; BaseHealth = 80; BaseAttack = 5; BaseDefense = 6; XP = 200; Gold = 100 },
+    @{ Name = "Corrupted Diablos"; BaseHealth = 40; BaseAttack = 6; BaseDefense = 9; XP = 280; Gold = 120 },
     @{ Name = "Titan Lord"; BaseHealth = 60; BaseAttack = 12; BaseDefense = 12; XP = 180; Gold = 120 },
     @{ Name = "Archlich"; BaseHealth = 40; BaseAttack = 18; BaseDefense = 6; XP = 220; Gold = 90 },
     @{ Name = "Chaos God"; BaseHealth = 55; BaseAttack = 16; BaseDefense = 10; XP = 250; Gold = 150 },
-    @{ Name = "Death Eater"; BaseHealth = 50; BaseAttack = 4; BaseDefense = 20; XP = 350; Gold = 150 },
+    @{ Name = "Death Eater"; BaseHealth = 60; BaseAttack = 4; BaseDefense = 20; XP = 350; Gold = 150 },
     @{ Name = "World Eater"; BaseHealth = 70; BaseAttack = 10; BaseDefense = 14; XP = 380; Gold = 200 }
 )
 
@@ -286,7 +288,7 @@ $BossAbilities = @(
     @{ 
         Name = "Dark Blast"; 
         Description = "unleashes a wave of dark energy";
-        DamageMultiplier = 1.8;
+        DamageMultiplier = 1.5;
         Effect = "lifedrain"  # Heals boss for portion of damage
     },
     @{ 
@@ -298,7 +300,7 @@ $BossAbilities = @(
     @{ 
         Name = "Shadow Strike"; 
         Description = "strikes from the shadows";
-        DamageMultiplier = 2.0;
+        DamageMultiplier = 1.8;
         Effect = "critical"   # Higher chance to crit
     },
     @{ 
@@ -347,51 +349,77 @@ $global:PlayerEquipment = @{
 
 # Equipment Definitions - The shop inventory listing will automatically use this array
 $ShopEquipment = @(
-    # Head Equipment
+    # Head Equipment (6 items)
     @{ Name = "Leather Cap"; Slot = "Head"; Cost = 30; Stats = @{ Defense = 2; Health = 5 }; Description = "Basic head protection" },
     @{ Name = "Iron Helmet"; Slot = "Head"; Cost = 75; Stats = @{ Defense = 4; Health = 8 }; Description = "Sturdy metal helmet" },
     @{ Name = "Mage's Circlet"; Slot = "Head"; Cost = 60; Stats = @{ Mana = 10; CriticalChance = 2 }; Description = "Enhances magical abilities" },
-    @{ Name = "Crown of Wisdom"; Slot = "Head"; Cost = 150; Stats = @{ Mana = 15; Health = 10; CriticalChance = 3 }; Description = "Royal headpiece that boosts intellect" },
+    @{ Name = "Crown of the Juggernaut"; Slot = "Head"; Cost = 800; Stats = @{ Defense = 12; Health = 40; Attack = 5 }; Description = "Forged in the heart of a volcano, this crown makes the wearer nearly invincible" },
+    @{ Name = "Assassin's Veil"; Slot = "Head"; Cost = 750; Stats = @{ CriticalChance = 15; Speed = 6; CriticalMultiplier = 0.5 }; Description = "Woven from shadow essence, it grants preternatural precision" },
+    @{ Name = "Archmage's Diadem"; Slot = "Head"; Cost = 780; Stats = @{ Mana = 50; CriticalChance = 8; CriticalMultiplier = 0.6 }; Description = "Contains crystallized starlight that enhances all magical abilities" },
 
-    # Body Equipment
+    # Body Equipment (6 items)
     @{ Name = "Leather Armor"; Slot = "Body"; Cost = 50; Stats = @{ Defense = 3; Health = 10 }; Description = "Basic body protection" },
     @{ Name = "Chainmail"; Slot = "Body"; Cost = 120; Stats = @{ Defense = 6; Health = 15; Speed = -1 }; Description = "Heavy but protective" },
     @{ Name = "Robe of the Magi"; Slot = "Body"; Cost = 100; Stats = @{ Mana = 12; Defense = 2 }; Description = "Magically enhanced robes" },
-    @{ Name = "Dragon Scale Armor"; Slot = "Body"; Cost = 300; Stats = @{ Defense = 10; Health = 25; Attack = 3 }; Description = "Crafted from ancient dragon scales" },
+    @{ Name = "Titan's Plate"; Slot = "Body"; Cost = 1200; Stats = @{ Defense = 20; Health = 60; Attack = 8 }; Description = "Armor so heavy it reshapes the earth with each step" },
+    @{ Name = "Shadow Weave Tunic"; Slot = "Body"; Cost = 1100; Stats = @{ Speed = 8; CriticalChance = 12; CriticalMultiplier = 0.8 }; Description = "Moves with the wearer like a second skin, leaving afterimages" },
+    @{ Name = "Robe of the Void"; Slot = "Body"; Cost = 1150; Stats = @{ Mana = 60; Defense = 12; CriticalMultiplier = 1.0 }; Description = "Fabric woven from the space between stars, channeling cosmic energy" },
 
-    # Legs Equipment
+    # Legs Equipment (6 items)
     @{ Name = "Leather Pants"; Slot = "Legs"; Cost = 25; Stats = @{ Defense = 1; Speed = 1 }; Description = "Light and flexible" },
     @{ Name = "Plate Leggings"; Slot = "Legs"; Cost = 80; Stats = @{ Defense = 4; Health = 5; Speed = -1 }; Description = "Heavy leg protection" },
     @{ Name = "Silk Trousers"; Slot = "Legs"; Cost = 45; Stats = @{ Mana = 5; Speed = 2 }; Description = "Enchanted fabric" },
-    @{ Name = "Boots of Swiftness"; Slot = "Legs"; Cost = 120; Stats = @{ Speed = 4; Defense = 2 }; Description = "Magically enhanced for speed" },
+    @{ Name = "Colossus Greaves"; Slot = "Legs"; Cost = 900; Stats = @{ Defense = 15; Health = 35; Speed = -2; Attack = 5 }; Description = "Can stomp with enough force to create minor earthquakes" },
+    @{ Name = "Wind Dancer Leggings"; Slot = "Legs"; Cost = 850; Stats = @{ Speed = 12; CriticalChance = 8; CriticalMultiplier = 0.5 }; Description = "Allows the wearer to move faster than the eye can follow" },
+    @{ Name = "Astral Striders"; Slot = "Legs"; Cost = 880; Stats = @{ Mana = 35; Speed = 8; CriticalMultiplier = 0.7 }; Description = "Leave trails of shimmering energy with each step" },
 
-    # Left Hand Equipment
+    # Left Hand Equipment (6 items)
     @{ Name = "Wooden Shield"; Slot = "LeftHand"; Cost = 40; Stats = @{ Defense = 3 }; Description = "Basic defensive shield" },
     @{ Name = "Tower Shield"; Slot = "LeftHand"; Cost = 100; Stats = @{ Defense = 7; Speed = -2 }; Description = "Massive defensive shield" },
     @{ Name = "Magic Focus"; Slot = "LeftHand"; Cost = 90; Stats = @{ Mana = 8; CriticalMultiplier = 0.2 }; Description = "Channel magical energy" },
-    @{ Name = "Dragonbone Shield"; Slot = "LeftHand"; Cost = 250; Stats = @{ Defense = 9; Health = 10; CriticalChance = 2 }; Description = "Shield made from dragon bones" },
+    @{ Name = "Aegis of the Immortal"; Slot = "LeftHand"; Cost = 1000; Stats = @{ Defense = 25; Health = 40; CriticalChance = -5 }; Description = "Legendary shield said to have blocked the breath of an ancient dragon" },
+    @{ Name = "Parrying Dagger"; Slot = "LeftHand"; Cost = 950; Stats = @{ Speed = 6; CriticalChance = 12; CriticalMultiplier = 0.6 }; Description = "So perfectly balanced it can deflect spells and arrows with ease" },
+    @{ Name = "Orb of Infinite Potential"; Slot = "LeftHand"; Cost = 980; Stats = @{ Mana = 50; CriticalMultiplier = 1.2; CriticalChance = 6 }; Description = "Contains a miniature galaxy that amplifies magical energies" },
 
-    # Right Hand Equipment
+    # Right Hand Equipment (6 items)
     @{ Name = "Iron Sword"; Slot = "RightHand"; Cost = 60; Stats = @{ Attack = 4 }; Description = "Standard combat sword" },
     @{ Name = "Great Axe"; Slot = "RightHand"; Cost = 130; Stats = @{ Attack = 8; Speed = -1 }; Description = "Heavy two-handed weapon" },
     @{ Name = "Enchanted Staff"; Slot = "RightHand"; Cost = 110; Stats = @{ Attack = 3; Mana = 12; CriticalChance = 3 }; Description = "Magical staff for spellcasters" },
-    @{ Name = "Blade of the Void"; Slot = "RightHand"; Cost = 400; Stats = @{ Attack = 12; CriticalChance = 5; CriticalMultiplier = 0.4 }; Description = "Weapon that cuts through reality" },
+    @{ Name = "World Breaker"; Slot = "RightHand"; Cost = 1500; Stats = @{ Attack = 30; Defense = 8; Health = 25; Speed = -4 }; Description = "A weapon so massive it warps gravity around itself" },
+    @{ Name = "Blade of a Thousand Cuts"; Slot = "RightHand"; Cost = 1400; Stats = @{ Attack = 22; CriticalChance = 18; CriticalMultiplier = 1.0; Speed = 4 }; Description = "Moves so fast it appears to strike from multiple angles simultaneously" },
+    @{ Name = "Staff of Cosmic Alignment"; Slot = "RightHand"; Cost = 1450; Stats = @{ Attack = 12; Mana = 45; CriticalMultiplier = 1.5; CriticalChance = 10 }; Description = "Channels the fundamental forces of the universe into spells" },
 
-    # Cloak Equipment
+    # Cloak Equipment (6 items)
     @{ Name = "Traveler's Cloak"; Slot = "Cloak"; Cost = 35; Stats = @{ Speed = 1; Defense = 1 }; Description = "Light cloak for journeys" },
     @{ Name = "Shadow Cloak"; Slot = "Cloak"; Cost = 95; Stats = @{ Speed = 3; CriticalChance = 2 }; Description = "Blends with shadows" },
     @{ Name = "Mage's Cloak"; Slot = "Cloak"; Cost = 85; Stats = @{ Mana = 8; Defense = 2 }; Description = "Enchanted with protective magic" },
-    @{ Name = "Cloak of Invisibility"; Slot = "Cloak"; Cost = 280; Stats = @{ Speed = 5; CriticalChance = 4; Defense = 3 }; Description = "Renders the wearer nearly invisible" },
+    @{ Name = "Mantle of the Mountain King"; Slot = "Cloak"; Cost = 900; Stats = @{ Defense = 18; Health = 50; Attack = 6 }; Description = "Woven from the beard of a mountain giant, grants titanic resilience" },
+    @{ Name = "Cloak of the Phantom"; Slot = "Cloak"; Cost = 850; Stats = @{ Speed = 10; CriticalChance = 15; CriticalMultiplier = 0.6 }; Description = "Allows the wearer to phase through solid matter for brief moments" },
+    @{ Name = "Voidweave Mantle"; Slot = "Cloak"; Cost = 880; Stats = @{ Mana = 40; CriticalMultiplier = 0.9; Defense = 10 }; Description = "Absorbs ambient magic, converting it into protective energies" },
 
-    # Accessories
-    @{ Name = "Silver Ring"; Slot = "Accessory1"; Cost = 45; Stats = @{ Mana = 3; CriticalChance = 1 }; Description = "Simple magical ring" },
-    @{ Name = "Warrior's Bracer"; Slot = "Accessory1"; Cost = 55; Stats = @{ Attack = 2; Health = 5 }; Description = "Reinforced combat bracer" },
-    @{ Name = "Amulet of Health"; Slot = "Accessory1"; Cost = 70; Stats = @{ Health = 15 }; Description = "Boosts vitality" },
-    @{ Name = "Ring of Power"; Slot = "Accessory1"; Cost = 200; Stats = @{ Attack = 5; Mana = 8; CriticalChance = 3 }; Description = "Ancient ring of immense power" },
-    @{ Name = "Necklace of the Sage"; Slot = "Accessory2"; Cost = 65; Stats = @{ Mana = 10; CriticalMultiplier = 0.2 }; Description = "Enhances magical prowess" },
-    @{ Name = "Belt of Giant Strength"; Slot = "Accessory2"; Cost = 80; Stats = @{ Attack = 4; Health = 8 }; Description = "Grants the wearer enhanced strength" },
-    @{ Name = "Earring of Precision"; Slot = "Accessory2"; Cost = 60; Stats = @{ CriticalChance = 4; Speed = 1 }; Description = "Improves accuracy and reflexes" },
-    @{ Name = "Orb of Eternal Wisdom"; Slot = "Accessory2"; Cost = 220; Stats = @{ Mana = 15; CriticalMultiplier = 0.5; Health = 10 }; Description = "Contains infinite knowledge" }
+    # Accessory1 - Rings (10 items - 4 physical, 3 critical, 3 magic)
+    @{ Name = "Warrior's Band"; Slot = "Accessory1"; Cost = 80; Stats = @{ Attack = 4; Health = 12 }; Description = "Reinforced combat ring" },
+    @{ Name = "Guardian's Seal"; Slot = "Accessory1"; Cost = 85; Stats = @{ Defense = 5; Health = 15 }; Description = "Provides additional protection" },
+    @{ Name = "Berserker's Ring"; Slot = "Accessory1"; Cost = 95; Stats = @{ Attack = 7; Speed = -1 }; Description = "Sacrifices speed for raw power" },
+    @{ Name = "Vitality Band"; Slot = "Accessory1"; Cost = 90; Stats = @{ Health = 25 }; Description = "Greatly enhances vitality" },
+    @{ Name = "Ring of Precision"; Slot = "Accessory1"; Cost = 120; Stats = @{ CriticalChance = 8; Speed = 2 }; Description = "Improves accuracy dramatically" },
+    @{ Name = "Lucky Charm"; Slot = "Accessory1"; Cost = 110; Stats = @{ CriticalChance = 6; CriticalMultiplier = 0.4 }; Description = "Brings fortune in combat" },
+    @{ Name = "Swiftstrike Band"; Slot = "Accessory1"; Cost = 130; Stats = @{ Speed = 4; CriticalChance = 4 }; Description = "Enhances reflexes and timing" },
+    @{ Name = "Sage's Ring"; Slot = "Accessory1"; Cost = 100; Stats = @{ Mana = 15; CriticalChance = 3 }; Description = "Enhances magical abilities" },
+    @{ Name = "Arcane Focus"; Slot = "Accessory1"; Cost = 140; Stats = @{ Mana = 20; CriticalMultiplier = 0.4 }; Description = "Amplifies spell power" },
+    @{ Name = "Mage's Band"; Slot = "Accessory1"; Cost = 110; Stats = @{ Mana = 15; Health = 8 }; Description = "Balances magic and vitality" },
+
+    # Accessory2 - Amulets/Belts (10 items - 4 physical, 3 critical, 3 magic)
+    @{ Name = "Amulet of Might"; Slot = "Accessory2"; Cost = 120; Stats = @{ Attack = 6; Health = 15 }; Description = "Grants enhanced strength" },
+    @{ Name = "Belt of Endurance"; Slot = "Accessory2"; Cost = 130; Stats = @{ Health = 35; Defense = 3 }; Description = "Greatly increases stamina" },
+    @{ Name = "Champion's Medallion"; Slot = "Accessory2"; Cost = 150; Stats = @{ Attack = 5; Defense = 4; Health = 12 }; Description = "Well-rounded combat enhancement" },
+    @{ Name = "Titan's Girdle"; Slot = "Accessory2"; Cost = 140; Stats = @{ Health = 40; Speed = -1 }; Description = "Massive health boost at a mobility cost" },
+    @{ Name = "Assassin's Pendant"; Slot = "Accessory2"; Cost = 180; Stats = @{ CriticalChance = 10; Speed = 3 }; Description = "Perfect for lethal strikes" },
+    @{ Name = "Fate's Favor"; Slot = "Accessory2"; Cost = 170; Stats = @{ CriticalMultiplier = 0.6; CriticalChance = 4 }; Description = "Makes critical hits devastating" },
+    @{ Name = "Windwalker Charm"; Slot = "Accessory2"; Cost = 160; Stats = @{ Speed = 5; CriticalChance = 3 }; Description = "Unmatched mobility" },
+    @{ Name = "Amulet of the Arcane"; Slot = "Accessory2"; Cost = 150; Stats = @{ Mana = 25; CriticalChance = 3 }; Description = "Substantial magical reservoir" },
+    @{ Name = "Orb of Power"; Slot = "Accessory2"; Cost = 200; Stats = @{ Mana = 20; CriticalMultiplier = 0.6; Attack = 3 }; Description = "Enhances all offensive capabilities" },
+    @{ Name = "Crystal Pendant"; Slot = "Accessory2"; Cost = 130; Stats = @{ Mana = 15; Defense = 4; Health = 8 }; Description = "Balanced magical protection" }
 )
 
 # Artifact System
@@ -556,18 +584,18 @@ function Show-GameOverScreen {
     }
     Write-Host ""
     
-    # Show achievements based on performance
+    # Achivement list - need to add more
     if ($global:CurrentFloor -ge 10) {
-        Write-Host "🏆 Deep Explorer: Reached floor 10 or higher!" -ForegroundColor Cyan
+        Write-Host "Deep Explorer: Reached floor 10 or higher!" -ForegroundColor Cyan
     }
     if ($global:BossesDefeated -ge 5) {
-        Write-Host "🏆 Boss Slayer: Defeated 5 or more bosses!" -ForegroundColor Yellow
+        Write-Host "Boss Slayer: Defeated 5 or more bosses!" -ForegroundColor Yellow
     }
     if ($global:Player.Level -ge 10) {
-        Write-Host "🏆 Veteran Adventurer: Reached level 10 or higher!" -ForegroundColor Green
+        Write-Host "Veteran Adventurer: Reached level 10 or higher!" -ForegroundColor Green
     }
     if ($global:PlayerArtifacts.Count -ge 3) {
-        Write-Host "🏆 Artifact Collector: Found 3 or more artifacts!" -ForegroundColor Magenta
+        Write-Host "Artifact Collector: Found 3 or more artifacts!" -ForegroundColor Magenta
     }
     
     Write-Host ""
@@ -655,14 +683,14 @@ function Show-Equipment {
     Write-Host "`n=== YOUR EQUIPMENT ===" -ForegroundColor Cyan
     
     $slots = @(
-        @{Name = "Head"; Display = "👑 Head"},
-        @{Name = "Body"; Display = "🛡️ Body"},
-        @{Name = "Legs"; Display = "👖 Legs"},
-        @{Name = "LeftHand"; Display = "🛡️ Left Hand"},
-        @{Name = "RightHand"; Display = "⚔️ Right Hand"},
-        @{Name = "Cloak"; Display = "🧥 Cloak"},
-        @{Name = "Accessory1"; Display = "💍 Accessory 1"},
-        @{Name = "Accessory2"; Display = "💎 Accessory 2"}
+        @{Name = "Head"; Display = "Head"},
+        @{Name = "Body"; Display = "Body"},
+        @{Name = "Legs"; Display = "Legs"},
+        @{Name = "LeftHand"; Display = "Left Hand"},
+        @{Name = "RightHand"; Display = "Right Hand"},
+        @{Name = "Cloak"; Display = "Cloak"},
+        @{Name = "Accessory1"; Display = "Accessory 1"},
+        @{Name = "Accessory2"; Display = "Accessory 2"}
     )
     
     $totalBonuses = @{}
@@ -897,7 +925,7 @@ function Get-RandomMonster {
         $boss = $BossTypes[(Get-Random -Maximum $BossTypes.Count)].Clone()
         
         # Scale boss stats based on player level and stats (balance as needed)
-		$scaleFactor = 2 + ($global:CurrentFloor * 0.5) + ($global.Player.Level * 0.5) + ($global.Player.ExperienceToNextLevel * 0.0001)
+		$scaleFactor = 2 + ($global:CurrentFloor * 0.8) + ($global.Player.Level * 0.5) + ($global.Player.ExperienceToNextLevel * 0.0003)
 		$boss.Health = [Math]::Round($boss.BaseHealth * $scaleFactor)
 		$boss.Attack = [Math]::Round($boss.BaseAttack * $scaleFactor)
 		$boss.Defense = [Math]::Round($boss.BaseDefense * $scaleFactor)
@@ -1504,10 +1532,10 @@ function Level-Up {
         $global:Player.ExperienceToNextLevel = [Math]::Round($global:Player.ExperienceToNextLevel * 1.5)
         
         # Stat increases
-        $healthIncrease = 5 + (Get-Random -Minimum 1 -Maximum 4)
+        $healthIncrease = 5 + (Get-Random -Minimum 2 -Maximum 9)
         $attackIncrease = 1 + (Get-Random -Minimum 0 -Maximum 2)
         $defenseIncrease = 1 + (Get-Random -Minimum 0 -Maximum 2)
-        $manaIncrease = 5 + (Get-Random -Minimum 2 -Maximum 5)
+        $manaIncrease = 5 + (Get-Random -Minimum 2 -Maximum 6)
         
         # Update base stats
         $global:PlayerBaseStats.MaxHealth += $healthIncrease
@@ -1520,7 +1548,6 @@ function Level-Up {
         $global:Player.MaxMana = $global:PlayerBaseStats.MaxMana
         $global:Player.Attack = $global:PlayerBaseStats.Attack
         $global:Player.Defense = $global:PlayerBaseStats.Defense
-        
         $global:Player.Health = $global:Player.MaxHealth
         $global:Player.Mana = $global:Player.MaxMana
         
@@ -1639,8 +1666,8 @@ function Visit-Shop {
         @{ Name = "Mana Potion"; Cost = 12; Description = "Restore 20 Mana" },
         @{ Name = "Attack Boost"; Cost = 50; Description = "Permanently +2 Attack" },
         @{ Name = "Defense Boost"; Cost = 50; Description = "Permanently +2 Defense" },
-        @{ Name = "Critical Charm"; Cost = 100; Description = "Permanently +5% Critical Chance" },
-        @{ Name = "Keen Edge"; Cost = 200; Description = "Permanently +0.5 Critical Multiplier" }
+        @{ Name = "Critical Charm"; Cost = 200; Description = "Permanently +0.5% Critical Chance" },
+        @{ Name = "Keen Edge"; Cost = 300; Description = "Permanently +0.2 Critical Multiplier" }
     )
     
     # Display regular items
@@ -1650,6 +1677,7 @@ function Visit-Shop {
     }
     
     # Display equipment options
+    Write-Host "" #Page break
     Write-Host "7. Buy Equipment" -ForegroundColor White
     Write-Host "   Purchase new gear for your slots" -ForegroundColor Gray
     Write-Host "8. Sell Artifact (50 gold)" -ForegroundColor White
@@ -1701,9 +1729,9 @@ function Visit-Shop {
             }
         }
         '5' {
-            if ($global:Player.Gold -ge 100) {
-                $global:Player.Gold -= 100
-                $global:PlayerBaseStats.CriticalChance += 5
+            if ($global:Player.Gold -ge 200) {
+                $global:Player.Gold -= 200
+                $global:PlayerBaseStats.CriticalChance += 0.5
 		Update-AllStats
                 Write-Host "Critical chance increased by 5%! Current: $($global:Player.CriticalChance)%" -ForegroundColor Cyan
             } else {
@@ -1711,9 +1739,9 @@ function Visit-Shop {
             }
         }
         '6' {
-            if ($global:Player.Gold -ge 200) {
-                $global:Player.Gold -= 200
-                $global:PlayerBaseStats.CriticalMultiplier += 0.5
+            if ($global:Player.Gold -ge 300) {
+                $global:Player.Gold -= 300
+                $global:PlayerBaseStats.CriticalMultiplier += 0.2
 		Update-AllStats
                 Write-Host "Critical multiplier increased by 0.5! Current: $($global:Player.CriticalMultiplier)x" -ForegroundColor Cyan
             } else {
