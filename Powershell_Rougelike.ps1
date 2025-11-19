@@ -277,7 +277,7 @@ $BossTypes = @(
     @{ Name = "Basilisk King"; BaseHealth = 80; BaseAttack = 5; BaseDefense = 6; XP = 200; Gold = 100 },
     @{ Name = "Corrupted Diablos"; BaseHealth = 40; BaseAttack = 6; BaseDefense = 9; XP = 280; Gold = 120 },
     @{ Name = "Titan Lord"; BaseHealth = 60; BaseAttack = 12; BaseDefense = 12; XP = 180; Gold = 120 },
-    @{ Name = "Archlich"; BaseHealth = 40; BaseAttack = 18; BaseDefense = 6; XP = 220; Gold = 90 },
+    @{ Name = "Archlich"; BaseHealth = 40; BaseAttack = 18; BaseDefense = 4; XP = 220; Gold = 90 },
     @{ Name = "Chaos God"; BaseHealth = 55; BaseAttack = 16; BaseDefense = 10; XP = 250; Gold = 150 },
     @{ Name = "Death Eater"; BaseHealth = 60; BaseAttack = 4; BaseDefense = 20; XP = 350; Gold = 150 },
     @{ Name = "World Eater"; BaseHealth = 70; BaseAttack = 10; BaseDefense = 14; XP = 380; Gold = 200 }
