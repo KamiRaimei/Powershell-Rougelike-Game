@@ -12,10 +12,12 @@ No specific requirements.
 ### How to run
 #### Powershell
 Run the following command in windows terminal within the script folder
+
 ```.\Terminal-Rougelike-Game.ps1```
 
 #### Python
 Run the following command in terminal within the script folder (assuming python is installed)
+
 ```python ./Terminal-Rougelike-Game.py```
 
 
