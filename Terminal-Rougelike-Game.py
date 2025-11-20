@@ -744,7 +744,7 @@ def show_equipment():
             refinement_text = f" [+{refinement_level}]" if refinement_level > 0 else ""
             broken_text = " [BROKEN]" if is_broken else ""
             
-            print(f"\n{slot['Display']}: {equipment['Name']}{refinement_text}{broken_text}")
+            print_color(f"\n{slot['Display']}: {equipment['Name']}{refinement_text}{broken_text}", "yellow")
             print(f"   {equipment['Description']}")
             
             # Get base stats and refined stats
@@ -757,29 +757,29 @@ def show_equipment():
                 refined_value = refined_stats[stat]
                 improvement = refined_value - base_value
                 
-                color = "cyan" if improvement > 0 else "white"
+                color = "cyan" if improvement > 0 else "yellow"
                 improvement_text = f" (+{improvement})" if improvement > 0 else ""
                 
                 if stat == "Health":
-                    print(f"   {refined_value} Health{improvement_text}")
+                    print_color(f"   {refined_value} Health{improvement_text}", "green")
                     total_bonuses["Health"] = total_bonuses.get("Health", 0) + refined_value
                 elif stat == "Mana":
-                    print(f"   {refined_value} Mana{improvement_text}")
+                    print_color(f"   {refined_value} Mana{improvement_text}", "green")
                     total_bonuses["Mana"] = total_bonuses.get("Mana", 0) + refined_value
                 elif stat == "Attack":
-                    print(f"   {refined_value} Attack{improvement_text}")
+                    print_color(f"   {refined_value} Attack{improvement_text}", "green")
                     total_bonuses["Attack"] = total_bonuses.get("Attack", 0) + refined_value
                 elif stat == "Defense":
-                    print(f"   {refined_value} Defense{improvement_text}")
+                    print_color(f"   {refined_value} Defense{improvement_text}", "green")
                     total_bonuses["Defense"] = total_bonuses.get("Defense", 0) + refined_value
                 elif stat == "Speed":
-                    print(f"   {refined_value} Speed{improvement_text}")
+                    print_color(f"   {refined_value} Speed{improvement_text}", "green")
                     total_bonuses["Speed"] = total_bonuses.get("Speed", 0) + refined_value
                 elif stat == "CriticalChance":
-                    print(f"   {refined_value}% Critical Chance{improvement_text}")
+                    print_color(f"   {refined_value}% Critical Chance{improvement_text}", "green")
                     total_bonuses["CriticalChance"] = total_bonuses.get("CriticalChance", 0) + refined_value
                 elif stat == "CriticalMultiplier":
-                    print(f"   {refined_value} Critical Multiplier{improvement_text}")
+                    print_color(f"   {refined_value} Critical Multiplier{improvement_text}", "green")
                     total_bonuses["CriticalMultiplier"] = total_bonuses.get("CriticalMultiplier", 0) + refined_value
         else:
             print(f"\n{slot['Display']}: [Empty]")
@@ -881,8 +881,8 @@ def get_available_equipment_for_slot(slot):
 
 def show_refinement_menu():
     while True:
-        print("\n=== EQUIPMENT REFINEMENT ===")
-        print(f"Your gold: {game_state.player['Gold']}")
+        print_color("\n=== EQUIPMENT REFINEMENT ===", "cyan")
+        print_color(f"Your gold: {game_state.player['Gold']}", "yellow")
         print("\nSelect equipment to refine:")
         
         slots = ["Head", "Body", "Legs", "LeftHand", "RightHand", "Cloak", "Accessory1", "Accessory2"]
@@ -894,12 +894,12 @@ def show_refinement_menu():
             if equipment and equipment.get("RefinementLevel", 0) < 10 and not equipment.get("IsBroken", False):
                 slot_options[option_number] = slot
                 current_level = equipment.get("RefinementLevel", 0)
-                print(f"{option_number}. {equipment['Name']} [+{current_level}]")
-                print(f"   Next level: +{current_level + 1} | Cost: {game_state.refinement_costs[current_level]} gold")
+                print_color(f"{option_number}. {equipment['Name']} [+{current_level}]", "yellow")
+                print_color(f"   Next level: +{current_level + 1} | Cost: {game_state.refinement_costs[current_level]} gold", "white")
                 success_rate = game_state.refinement_success_rates[current_level]
                 break_rate = game_state.refinement_break_rates[current_level]
                 color = "green" if success_rate >= 70 else "yellow" if success_rate >= 40 else "red"
-                print(f"   Success: {success_rate}% | Break: {break_rate}%")
+                print_color(f"   Success: {success_rate}% | Break: {break_rate}%", "white")
                 option_number += 1
         
         if not slot_options:
@@ -935,7 +935,7 @@ def start_refinement(slot):
     success_rate = game_state.refinement_success_rates[current_level]
     break_rate = game_state.refinement_break_rates[current_level]
     
-    print(f"\n=== REFINING {equipment['Name']} ===")
+    print_color(f"\n=== REFINING {equipment['Name']} ===", "cyan")
     print(f"Current: +{current_level}")
     print(f"Target: +{next_level}")
     print(f"Cost: {cost} gold")
@@ -943,14 +943,14 @@ def start_refinement(slot):
     print(f"Break Rate: {break_rate}%")
     
     if game_state.player["Gold"] < cost:
-        print(f"Not enough gold! You need {cost} gold.")
+        print_color(f"Not enough gold! You need {cost} gold.", "red")
         print("Press any key to continue...")
         press_any_key()
         return
     
     print("\nAre you sure you want to attempt refinement?")
-    print("1. Yes, attempt refinement")
-    print("2. No, go back")
+    print_color("1. Yes, attempt refinement", "green")
+    print_color("2. No, go back", "red")
     
     confirm = input("\nSelect option: ")
     
@@ -1187,8 +1187,8 @@ def start_combat():
     monster = get_random_monster()
     monster_health = monster["Health"]
     
-    print(f"\nA wild {monster['Name']} appears!")
-    print(f"Monster HP: {monster_health} | Attack: {monster['Attack']} | Defense: {monster['Defense']}", "red")
+    print_color(f"\nA wild {monster['Name']} appears!", "cyan")
+    print_color(f"Monster HP: {monster_health} | Attack: {monster['Attack']} | Defense: {monster['Defense']}", "red")
     
     player_turn = game_state.player["Speed"] >= random.randint(1, 10)
 
@@ -1315,11 +1315,11 @@ def start_combat():
             elif choice == '2' and game_state.player["Class"] not in ["Mage", "Cleric"]:
                 if game_state.player["Mana"] >= 5:
                     game_state.player["Mana"] -= 5
-                    special_damage = game_state.player["Attack"] + random.randint(2, 5)
+                    special_damage = game_state.player["Attack"] + round(game_state.player["Attack"] * random.uniform(0.10, 0.20))
                     monster_health -= special_damage
-                    print(f"You use a special ability for {special_damage} damage!")
+                    print_color(f"You use a special ability for {special_damage} damage!", "cyan")
                 else:
-                    print("Not enough mana!")
+                    print_color("Not enough mana!", "red")
                     continue
             
             # Potion for all classes (option 6)
@@ -1350,17 +1350,17 @@ def start_combat():
                     game_state.player["Mana"] = min(game_state.player["MaxMana"], game_state.player["Mana"] + mana_restore)
                     actual_mana_restore = game_state.player["Mana"] - old_mana
                     
-                    print(f"You use a potion and heal {actual_heal} health and restore {actual_mana_restore} mana!")
-                    print(f"Current HP: {game_state.player['Health']}/{game_state.player['MaxHealth']}")
-                    print(f"Current Mana: {game_state.player['Mana']}/{game_state.player['MaxMana']}")
+                    print_color(f"You use a potion and heal {actual_heal} health and restore {actual_mana_restore} mana!", "green")
+                    print_color(f"Current HP: {game_state.player['Health']}/{game_state.player['MaxHealth']}", "green")
+                    print_color(f"Current Mana: {game_state.player['Mana']}/{game_state.player['MaxMana']}", "blue")
                 else:
-                    print("Not enough gold!")
+                    print_color("Not enough gold!", "red")
                     continue
             
             # Flee for all classes (option 7)
             elif choice == '7':
                 if random.randint(1, 100) < 40:
-                    print("You successfully fled from combat!")
+                    print_color("You successfully fled from combat!", "green")
                     print("Press any key to continue...")
                     press_any_key()
                     return False
@@ -1373,7 +1373,7 @@ def start_combat():
             write_typewriter("\n=== MONSTER'S TURN ===", "red")
             
             # Boss special attacks
-            if monster.get("IsBoss") and random.randint(1, 100) < 25:
+            if monster.get("IsBoss") and random.randint(1, 100) < 20:
                 base_damage = max(2, (monster["Attack"] * monster["SpecialMultiplier"]) - game_state.player["Defense"])
                 
                 # Apply special effects based on ability type
@@ -1489,7 +1489,7 @@ def start_combat():
             game_state.bosses_defeated += 1
             print_color("*** BOSS DEFEATED! ***", "green")
 
-        print_color(f"Earned {xp_earned} XP and {gold_earned} gold!", "green")
+        print_color(f"Earned {xp_earned} XP and {gold_earned} gold!", "yellow")
 
         # Check for level up after combat victory
         level_up()
@@ -1528,7 +1528,7 @@ def show_artifacts():
     print(f"Carrying: {len(game_state.player_artifacts)}/{game_state.max_artifacts}")
     
     if not game_state.player_artifacts:
-        print("You haven't found any artifacts yet.")
+        print_color("You haven't found any artifacts yet.", "yellow")
         print("Defeat monsters and bosses to find rare artifacts!")
         return
     
@@ -1537,7 +1537,7 @@ def show_artifacts():
     for i, artifact in enumerate(game_state.player_artifacts, 1):
         tier_color = "magenta" if artifact["Tier"] == "High" else "yellow"
         
-        print(f"\n{i}. {artifact['Name']} [{artifact['Tier']} Tier]")
+        print_color(f"\n{i}. {artifact['Name']} [{artifact['Tier']} Tier]", "yellow")
         print(f"   {artifact['Description']}")
         
         # Show individual artifact stats
@@ -1546,19 +1546,19 @@ def show_artifacts():
             symbol = "+" if value > 0 else ""
             
             if stat == "Health":
-                print(f"   {symbol}{value} Health")
+                print_color(f"   {symbol}{value} Health", "green")
             elif stat == "Mana":
-                print(f"   {symbol}{value} Mana")
+                print_color(f"   {symbol}{value} Mana", "green")
             elif stat == "Attack":
-                print(f"   {symbol}{value} Attack")
+                print_color(f"   {symbol}{value} Attack", "green")
             elif stat == "Defense":
-                print(f"   {symbol}{value} Defense")
+                print_color(f"   {symbol}{value} Defense", "green")
             elif stat == "Speed":
-                print(f"   {symbol}{value} Speed")
+                print_color(f"   {symbol}{value} Speed", "green")
             elif stat == "CriticalChance":
-                print(f"   {symbol}{value}% Critical Chance")
+                print_color(f"   {symbol}{value}% Critical Chance", "green")
             elif stat == "CriticalMultiplier":
-                print(f"   {symbol}{value} Critical Multiplier")
+                print_color(f"   {symbol}{value} Critical Multiplier", "green")
             
             # Accumulate total bonuses
             total_bonuses[stat] = total_bonuses.get(stat, 0) + value
@@ -1662,9 +1662,11 @@ def start_ascension():
 
 def show_game_menu():
     print_color(f"\n=== FLOOR {game_state.current_floor} ===", "magenta")
-    print(f"Monsters Defeated: {game_state.monsters_defeated}")
-    print(f"Artifacts Found: {len(game_state.player_artifacts)}/{game_state.max_artifacts}")
-    print("\nWhat would you like to do?")
+    print()
+    print_color(f"Monsters Defeated: {game_state.monsters_defeated}", "cyan")
+    print_color(f"Artifacts Found: {len(game_state.player_artifacts)}/{game_state.max_artifacts}", "cyan")
+    print()
+    print_color("\nWhat would you like to do?", "yellow")
     print("1. Explore (Fight monsters)")
     print("2. Rest (Heal for 10 gold)")
     print("3. View Stats")
@@ -1728,6 +1730,7 @@ def visit_shop():
         print(f"   {item['Description']}")
     
     # Display equipment options
+    print()
     print_color("== EQUIPMENTS ==", "yellow")
     print()
     print_color("7. Buy Equipment", "cyan")
@@ -2056,7 +2059,7 @@ def start_game():
                 game_state.player["Gold"] -= 10
                 game_state.player["Health"] = game_state.player["MaxHealth"]
                 game_state.player["Mana"] = game_state.player["MaxMana"]
-                print("You rest and recover all health and mana!")
+                print_color("You rest and recover all health and mana!", "green")
             else:
                 print_color("Not enough gold to rest!", "red")
         elif choice == '3':
